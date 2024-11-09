@@ -1,4 +1,3 @@
-// Login.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -18,15 +17,12 @@ const Login = ({ setUserName, setUserRole }) => {
         password,
       });
 
-      // Guardar el token en localStorage para futuras solicitudes
       localStorage.setItem('token', response.data.token);
 
-      // Guardar el nombre de usuario y el rol en el estado global
       setUserName(username);
       setUserRole(response.data.role);
-      localStorage.setItem('username', username); // Almacena el nombre en localStorage
-      localStorage.setItem('role', response.data.role); // Almacena el rol en localStorage
-
+      localStorage.setItem('username', username); 
+      localStorage.setItem('role', response.data.role); 
       // Redirigir al usuario según su rol
       if (response.data.role === 1) {
         navigate('/admin-roles');

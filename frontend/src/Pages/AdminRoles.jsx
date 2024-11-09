@@ -1,11 +1,10 @@
-// AdminRoles.js
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import Navbar from '../Components/Navbar';
 import Sidebar from '../Components/Sidebar';
 
-const AdminRoles = ({ userName, setUserName, setUserRole }) => {
+const AdminRoles = ({ userName, setUserName, setUserRole, userRole, handleLogout }) => {
   const [users, setUsers] = useState([]);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
@@ -13,7 +12,6 @@ const AdminRoles = ({ userName, setUserName, setUserRole }) => {
     fetchUsers();
   }, []);
 
-  // Obtiene usuarios de la base de datos
   const fetchUsers = async () => {
     try {
       const response = await axios.get('http://localhost:3000/users');
@@ -23,7 +21,6 @@ const AdminRoles = ({ userName, setUserName, setUserRole }) => {
     }
   };
 
-  // Cambia el rol del usuario en la base de datos
   const changeRole = async (userId, newRole) => {
     try {
       await axios.put(`http://localhost:3000/users/${userId}/role`, { role_id: newRole });
@@ -35,7 +32,6 @@ const AdminRoles = ({ userName, setUserName, setUserRole }) => {
     }
   };
 
-  // Maneja el cambio de rol con confirmación
   const handleRoleChange = (userId, currentRole, newRole) => {
     if (currentRole === newRole) return;
     Swal.fire({
@@ -52,22 +48,14 @@ const AdminRoles = ({ userName, setUserName, setUserRole }) => {
     });
   };
 
-  // Cierra sesión
-  const handleLogout = () => {
-    setUserName(null);
-    setUserRole(null);
-    localStorage.removeItem('token');
-  };
-
   return (
     <div className="flex">
-      <Sidebar isExpanded={isSidebarExpanded} userName={userName} />
+      <Sidebar isExpanded={isSidebarExpanded} userName={userName} userRole={userRole} />
       <div className="flex-1">
         <Navbar
           userName={userName}
           toggleSidebar={() => setIsSidebarExpanded(!isSidebarExpanded)}
-          setUserName={setUserName}
-          handleLogout={handleLogout}
+          handleLogout={handleLogout} 
         />
 
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">

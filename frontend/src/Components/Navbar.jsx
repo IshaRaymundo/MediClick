@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaUser, FaBars } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
-const Navbar = ({ userName, toggleSidebar, setUserName }) => {
+const Navbar = ({ userName, toggleSidebar, handleLogout }) => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -15,12 +15,11 @@ const Navbar = ({ userName, toggleSidebar, setUserName }) => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
-  const handleLogout = () => {
-    setUserName(null); // Cierra sesión estableciendo el nombre de usuario a null
-    navigate('/'); // Redirige al Home
+  const handleLogoutClick = () => {
+    handleLogout(); 
+    navigate('/'); 
   };
 
-  // Detecta clics fuera del dropdown para cerrarlo
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -59,8 +58,7 @@ const Navbar = ({ userName, toggleSidebar, setUserName }) => {
                 <li onClick={() => navigate('/profile')} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
                   Perfil
                 </li>
-
-                <li onClick={handleLogout} className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600">
+                <li onClick={handleLogoutClick} className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600">
                   Cerrar sesión
                 </li>
               </ul>

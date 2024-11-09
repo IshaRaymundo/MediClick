@@ -31,11 +31,11 @@ const specialties = [
   { icon: <FaAppleAlt className="w-10 h-10 text-white" />, name: 'Nutriología' },
 ];
 
-const DoctorList = ({ userName, setUserName }) => {
-const [isExpanded, setIsExpanded] = useState(false);
+const DoctorList = ({ userName, setUserName, userRole, handleLogout }) => {
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   const toggleSidebar = () => {
-    setIsExpanded(!isExpanded);
+    setIsSidebarExpanded(!isSidebarExpanded);
   };
 
   const doctors = [
@@ -49,9 +49,9 @@ const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <div className="flex">
-      <Sidebar isExpanded={isExpanded} userName={userName} />
+      <Sidebar isExpanded={isSidebarExpanded} userName={userName} userRole={userRole} />
       <div className="flex-1">
-      <Navbar userName={userName} toggleSidebar={toggleSidebar} setUserName={setUserName} />
+        <Navbar userName={userName} toggleSidebar={toggleSidebar} handleLogout={handleLogout} />
 
         <div className="px-8 py-4 flex flex-col items-center">
           <header className="flex justify-between items-center w-full max-w-4xl mb-8">
