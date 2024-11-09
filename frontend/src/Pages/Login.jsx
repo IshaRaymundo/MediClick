@@ -1,15 +1,43 @@
 // Login.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-const Login = ({ setUserName }) => {
+const Login = ({ setUserName, setUserRole }) => {
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setUserName(username);
-    navigate('/'); 
+
+    try {
+      const response = await axios.post('http://localhost:3000/login', {
+        username,
+        password,
+      });
+
+      // Guardar el token en localStorage para futuras solicitudes
+      localStorage.setItem('token', response.data.token);
+
+      // Guardar el nombre de usuario y el rol en el estado global
+      setUserName(username);
+      setUserRole(response.data.role);
+      localStorage.setItem('username', username); // Almacena el nombre en localStorage
+      localStorage.setItem('role', response.data.role); // Almacena el rol en localStorage
+
+      // Redirigir al usuario según su rol
+      if (response.data.role === 1) {
+        navigate('/admin-roles');
+      } else if (response.data.role === 2) {
+        navigate('/dashboard-doc');
+      } else {
+        navigate('/');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error en el servidor');
+    }
   };
 
   const handleBackToHome = () => {
@@ -20,6 +48,7 @@ const Login = ({ setUserName }) => {
     <div className="flex flex-col items-center justify-center min-h-screen bg-blue-50">
       <div className="w-full max-w-xl bg-white p-8 rounded-lg shadow-md">
         <h2 className="text-3xl font-semibold text-center text-blue-800 mb-6">Inicia Sesión</h2>
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="text"
@@ -31,6 +60,8 @@ const Login = ({ setUserName }) => {
           <input
             type="password"
             placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-2 rounded-full border border-gray-300 bg-gray-100 text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           <button
