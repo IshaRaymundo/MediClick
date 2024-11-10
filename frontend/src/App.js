@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import DoctorListComponent from './Pages/DashboardClient';
-import Login from './Pages/Login';
-import Register from './Pages/Register';
-import AdminRoles from './Pages/AdminRoles';
-import DashboardDoc from './Pages/DashboardDoc';
+import DoctorListComponent from './Pages/Client/DashboardClient';
+import Login from './Auth/Login';
+import Register from './Auth/Register';
+import AdminRoles from './Pages/Admin/AdminRoles';
+import DashboardDoc from './Pages/Doctor/DashboardDoc';
 
 function App() {
   const [userName, setUserName] = useState('');

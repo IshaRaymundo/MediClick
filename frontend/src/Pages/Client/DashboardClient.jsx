@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaHeartbeat, FaBrain, FaBaby, FaTooth, FaBone, FaEye, FaAppleAlt, FaSearch } from 'react-icons/fa';
-import Navbar from '../Components/Navbar';
-import Sidebar from '../Components/Sidebar';
+import Navbar from '../../Components/Navbar';
+import Sidebar from '../../Components/Sidebar';
 
 const DoctorCard = ({ name, description, price }) => (
   <div className="bg-gray-100 p-4 rounded-lg flex items-center w-full max-w-5xl mx-auto">

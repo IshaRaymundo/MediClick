@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import Navbar from '../Components/Navbar';
-import Sidebar from '../Components/Sidebar';
+import Navbar from '../../Components/Navbar';
+import Sidebar from '../../Components/Sidebar';
 
 const AdminRoles = ({ userName, setUserName, setUserRole, userRole, handleLogout }) => {
   const [users, setUsers] = useState([]);
