@@ -1,15 +1,16 @@
 // models/User.js
 const { pool, checkConnection } = require('../db/conexion');
+const bcrypt = require('bcrypt');
 
 class User {
     static async findByEmail(email) {
-        await checkConnection(); // Verifica que el pool esté activo
-        const connection = await pool.getConnection(); // Obtiene una conexión del pool
+        await checkConnection();
+        const connection = await pool.getConnection();
         try {
             const [result] = await connection.execute('SELECT * FROM users WHERE email = ?', [email]);
             return result[0];
         } finally {
-            connection.release(); // Libera la conexión de vuelta al pool
+            connection.release();
         }
     }
 
@@ -41,18 +42,42 @@ class User {
         await checkConnection();
         const connection = await pool.getConnection();
         try {
-            const [result] = await connection.execute('SELECT id, username, role_id FROM users');
+            const [result] = await connection.execute('SELECT id, username, email, role_id FROM users');
             return result;
         } finally {
             connection.release();
         }
     }
 
-    static async updateUserRole(id, role_id) {
+    static async updateUser(id, username, email, password) {
         await checkConnection();
         const connection = await pool.getConnection();
         try {
-            await connection.execute('UPDATE users SET role_id = ? WHERE id = ?', [role_id, id]);
+            if (password) {
+                // Si se proporciona una nueva contraseña, la encripta
+                const hashedPassword = await bcrypt.hash(password, 10);
+                await connection.execute(
+                    'UPDATE users SET username = ?, email = ?, password = ? WHERE id = ?',
+                    [username, email, hashedPassword, id]
+                );
+            } else {
+                // Si no hay nueva contraseña, solo actualiza el nombre y correo
+                await connection.execute(
+                    'UPDATE users SET username = ?, email = ? WHERE id = ?',
+                    [username, email, id]
+                );
+            }
+        } finally {
+            connection.release();
+        }
+    }
+
+    // Nuevo método para eliminar usuario
+    static async deleteUser(id) {
+        await checkConnection();
+        const connection = await pool.getConnection();
+        try {
+            await connection.execute('DELETE FROM users WHERE id = ?', [id]);
         } finally {
             connection.release();
         }

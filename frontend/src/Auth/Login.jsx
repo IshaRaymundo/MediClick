@@ -27,7 +27,7 @@ const Login = ({ setUserName, setUserRole }) => {
       localStorage.setItem('role', response.data.role); 
       // Redirigir al usuario según su rol
       if (response.data.role === 1) {
-        navigate('/admin-roles');
+        navigate('/admin-dashboard');
       } else if (response.data.role === 2) {
         navigate('/dashboard-doc');
       } else {

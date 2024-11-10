@@ -6,6 +6,8 @@ import Login from './Auth/Login';
 import Register from './Auth/Register';
 import AdminRoles from './Pages/Admin/AdminRoles';
 import DashboardDoc from './Pages/Doctor/DashboardDoc';
+import Dashboard from './Pages/Admin/Dashboard';
+import UserManagement from './Pages/Admin/Users';
 
 function App() {
   const [userName, setUserName] = useState('');
@@ -42,7 +44,7 @@ function App() {
       return children;
     }
     if (userRole === 1) {
-      return <Navigate to="/admin-roles" />;
+      return <Navigate to="/admin-dashboard" />;
     }
     if (userRole === 2) {
       return <Navigate to="/dashboard-doc" />;
@@ -56,18 +58,17 @@ function App() {
         <div>Cargando...</div>
       ) : (
         <Routes>
- <Route
-  path="/"
-  element={
-    <DoctorListComponent
-      userName={userName}
-      setUserName={setUserName}
-      userRole={userRole}
-      handleLogout={handleLogout} 
-    />
-  }
-/>
-
+          <Route
+            path="/"
+            element={
+              <DoctorListComponent
+                userName={userName}
+                setUserName={setUserName}
+                userRole={userRole}
+                handleLogout={handleLogout}
+              />
+            }
+          />
           <Route
             path="/login"
             element={<Login setUserName={setUserName} setUserRole={setUserRole} />}
@@ -75,6 +76,20 @@ function App() {
           <Route
             path="/register"
             element={<Register setUserName={setUserName} />}
+          />
+          <Route
+            path="/admin-dashboard" 
+            element={
+              <ProtectedRoute roleRequired={1}>
+                <Dashboard
+                  userName={userName}
+                  userRole={userRole}
+                  setUserName={setUserName}
+                  setUserRole={setUserRole}
+                  handleLogout={handleLogout}
+                />
+              </ProtectedRoute>
+            }
           />
           <Route
             path="/admin-roles"
@@ -85,7 +100,21 @@ function App() {
                   userRole={userRole}
                   setUserName={setUserName}
                   setUserRole={setUserRole}
-                  handleLogout={handleLogout} 
+                  handleLogout={handleLogout}
+                />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/Users-Admin"
+            element={
+              <ProtectedRoute roleRequired={1}>
+                <UserManagement
+                  userName={userName}
+                  userRole={userRole}
+                  setUserName={setUserName}
+                  setUserRole={setUserRole}
+                  handleLogout={handleLogout}
                 />
               </ProtectedRoute>
             }
@@ -99,7 +128,7 @@ function App() {
                   userRole={userRole}
                   setUserName={setUserName}
                   setUserRole={setUserRole}
-                  handleLogout={handleLogout} 
+                  handleLogout={handleLogout}
                 />
               </ProtectedRoute>
             }
