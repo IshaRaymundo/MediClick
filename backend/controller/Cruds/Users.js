@@ -26,6 +26,18 @@ class UsersController {
         }
     }
 
+    static async updateUserRole(req, res) {
+        const { id } = req.params;
+        const { role_id } = req.body;
+        try {
+            await User.updateUserRole(id, role_id);
+            res.status(200).json({ message: 'Rol actualizado correctamente' });
+        } catch (error) {
+            console.error('Error al actualizar rol:', error);
+            res.status(500).json({ message: 'Error en el servidor' });
+        }
+    }
+
     static async deleteUser(req, res) {
         const { id } = req.params;
         try {

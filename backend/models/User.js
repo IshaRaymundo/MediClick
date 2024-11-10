@@ -72,6 +72,19 @@ class User {
         }
     }
 
+    static async updateUserRole(id, role_id) {
+        await checkConnection();
+        const connection = await pool.getConnection();
+        try {
+            await connection.execute(
+                'UPDATE users SET role_id = ? WHERE id = ?',
+                [role_id, id]
+            );
+        } finally {
+            connection.release();
+        }
+    }
+
     // Nuevo método para eliminar usuario
     static async deleteUser(id) {
         await checkConnection();
