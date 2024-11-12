@@ -59,6 +59,9 @@ class AuthController {
             res.status(500).json({ message: 'Error en el servidor' });
         }
     }
+
+
+    
 }
 
 module.exports = AuthController;

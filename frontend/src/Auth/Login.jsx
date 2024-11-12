@@ -87,6 +87,13 @@ const Login = ({ setUserName, setUserRole }) => {
             Regístrate
           </a>
         </p>
+
+        <p className="mt-4 text-center text-gray-500">
+          ¿Olvidaste tu contraseña?{' '}
+          <a href="/auth/forgot-password" className="text-blue-600 hover:underline">
+            Recuperar
+          </a>
+        </p>
         <button
           onClick={handleBackToHome}
           className="mt-6 w-full py-2 rounded-full border border-blue-600 text-blue-600 font-semibold hover:bg-blue-100 transition duration-200"

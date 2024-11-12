@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaUserFriends, FaUserMd, FaShieldAlt } from 'react-icons/fa';
+import { FaUserFriends, FaUserMd, FaStethoscope } from 'react-icons/fa';
 import Navbar from '../../Components/Navbar';
 import Sidebar from '../../Components/Sidebar';
 import { useNavigate } from 'react-router-dom';
@@ -13,23 +13,18 @@ const Dashboard = ({ userName, userRole, setUserName, setUserRole, handleLogout 
       title: 'Usuarios',
       icon: <FaUserFriends className="absolute top-4 right-4 text-white text-5xl opacity-20" />,
       description: 'Gestiona todos los usuarios registrados.',
-      bgColor: 'bg-blue-500',
+      bgColor: 'bg-green-500',
       route: '/Users-Admin',
     },
     {
-      title: 'Doctores',
-      icon: <FaUserMd className="absolute top-4 right-4 text-white text-5xl opacity-20" />,
-      description: 'Administra la información de los doctores.',
-      bgColor: 'bg-green-500',
-      route: '/doctores',
+      title: 'Especialidades',
+      icon: <FaStethoscope className="absolute top-4 right-4 text-white text-5xl opacity-20" />,
+      description: 'Administra la información de las especialidades médicas.',
+      bgColor: 'bg-purple-500',
+      route: '/especialidades',
     },
-    {
-      title: 'Roles',
-      icon: <FaShieldAlt className="absolute top-4 right-4 text-white text-5xl opacity-20" />,
-      description: 'Configura y asigna roles de usuario.',
-      bgColor: 'bg-red-500',
-      route: '/admin-roles',
-    },
+    
+
   ];
 
   const handleCardClick = (route) => {

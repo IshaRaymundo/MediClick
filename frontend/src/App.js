@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import DoctorListComponent from './Pages/Client/DashboardClient';
 import Login from './Auth/Login';
 import Register from './Auth/Register';
-import AdminRoles from './Pages/Admin/AdminRoles';
 import DashboardDoc from './Pages/Doctor/DashboardDoc';
 import Dashboard from './Pages/Admin/Dashboard';
 import UserManagement from './Pages/Admin/Users';
@@ -77,25 +76,12 @@ function App() {
             path="/register"
             element={<Register setUserName={setUserName} />}
           />
+          
           <Route
             path="/admin-dashboard" 
             element={
               <ProtectedRoute roleRequired={1}>
                 <Dashboard
-                  userName={userName}
-                  userRole={userRole}
-                  setUserName={setUserName}
-                  setUserRole={setUserRole}
-                  handleLogout={handleLogout}
-                />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin-roles"
-            element={
-              <ProtectedRoute roleRequired={1}>
-                <AdminRoles
                   userName={userName}
                   userRole={userRole}
                   setUserName={setUserName}
