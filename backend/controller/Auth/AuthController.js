@@ -1,7 +1,7 @@
 // controllers/AuthController.js
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const User = require('../../models/User');
 const SECRET_KEY = 'your_secret_key';
 
 class AuthController {
@@ -17,20 +17,29 @@ class AuthController {
             await User.createUser(username, hashedPassword, email);
             res.status(201).json({ message: 'Usuario registrado correctamente' });
         } catch (error) {
-            console.error('Error en el registro:', error); // Muestra el error completo
+            console.error('Error en el registro:', error);
             res.status(500).json({ message: 'Error en el servidor', error: error.message });
-        }        
+        }
     }
 
     static async login(req, res) {
         const { username, password } = req.body;
         try {
             const user = await User.findByUsername(username);
-            if (!user || !(await bcrypt.compare(password, user.password))) {
+            if (!user) {
                 return res.status(400).json({ message: 'Usuario o contraseña incorrectos' });
             }
 
-            const token = jwt.sign({ id: user.id, role: user.role_id, username: user.username }, SECRET_KEY, { expiresIn: '1h' });
+            const isPasswordMatch = await bcrypt.compare(password, user.password);
+            if (!isPasswordMatch) {
+                return res.status(400).json({ message: 'Usuario o contraseña incorrectos' });
+            }
+
+            const token = jwt.sign(
+                { id: user.id, role: user.role_id, username: user.username },
+                SECRET_KEY,
+                { expiresIn: '1h' }
+            );
             res.json({ token, role: user.role_id, message: 'Inicio de sesión exitoso' });
         } catch (error) {
             console.error('Error en el login:', error);
@@ -59,9 +68,6 @@ class AuthController {
             res.status(500).json({ message: 'Error en el servidor' });
         }
     }
-
-
-    
 }
 
 module.exports = AuthController;

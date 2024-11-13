@@ -7,6 +7,8 @@ import Register from './Auth/Register';
 import DashboardDoc from './Pages/Doctor/DashboardDoc';
 import Dashboard from './Pages/Admin/Dashboard';
 import UserManagement from './Pages/Admin/Users';
+import ForgotPassword from './Auth/ForgotPassword';
+import ResetPassword from './Auth/ResetPassword';
 
 function App() {
   const [userName, setUserName] = useState('');
@@ -76,7 +78,14 @@ function App() {
             path="/register"
             element={<Register setUserName={setUserName} />}
           />
-          
+                    <Route
+            path="/forgot-password"
+            element={<ForgotPassword setUserName={setUserName} setUserRole={setUserRole} />}
+          />
+          <Route
+            path="/reset-password/:token"
+            element={<ResetPassword setUserName={setUserName} />}
+          />
           <Route
             path="/admin-dashboard" 
             element={

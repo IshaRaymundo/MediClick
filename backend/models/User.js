@@ -25,6 +25,19 @@ class User {
         }
     }
 
+
+static async findById(id) {
+    await checkConnection();
+    const connection = await pool.getConnection();
+    try {
+        const [result] = await connection.execute('SELECT * FROM users WHERE id = ?', [id]);
+        return result[0];
+    } finally {
+        connection.release();
+    }
+}
+
+
     static async createUser(username, password, email) {
         await checkConnection();
         const connection = await pool.getConnection();

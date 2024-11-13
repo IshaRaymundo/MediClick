@@ -6,7 +6,7 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 const Login = ({ setUserName, setUserRole }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // Estado para mostrar/ocultar contraseña
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -23,9 +23,9 @@ const Login = ({ setUserName, setUserRole }) => {
 
       setUserName(username);
       setUserRole(response.data.role);
-      localStorage.setItem('username', username); 
-      localStorage.setItem('role', response.data.role); 
-      // Redirigir al usuario según su rol
+      localStorage.setItem('username', username);
+      localStorage.setItem('role', response.data.role);
+
       if (response.data.role === 1) {
         navigate('/admin-dashboard');
       } else if (response.data.role === 2) {
@@ -35,6 +35,7 @@ const Login = ({ setUserName, setUserRole }) => {
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Error en el servidor');
+      console.error("Error en login:", err.response?.data || err);
     }
   };
 
@@ -87,10 +88,9 @@ const Login = ({ setUserName, setUserRole }) => {
             Regístrate
           </a>
         </p>
-
         <p className="mt-4 text-center text-gray-500">
           ¿Olvidaste tu contraseña?{' '}
-          <a href="/auth/forgot-password" className="text-blue-600 hover:underline">
+          <a href="/forgot-password" className="text-blue-600 hover:underline">
             Recuperar
           </a>
         </p>
