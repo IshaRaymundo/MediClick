@@ -16,7 +16,7 @@ const Sidebar = ({ userName, userRole, isExpanded }) => {
     <div
       className={`flex flex-col items-center ${
         isExpanded ? "w-64" : "w-16"
-      } bg-blue-200 h-screen p-4 transition-width duration-300`}
+      } bg-blue-200 min-h-screen p-4 transition-width duration-300`}
     >
       <div className="flex flex-col items-center mb-8 mt-12">
         <UserIcon className="w-10 h-10 text-blue-800 mb-2" />
