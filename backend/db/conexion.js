@@ -4,9 +4,9 @@ const mysql = require('mysql2/promise');
 const dbConfig = {
     host: 'localhost',
     user: 'root',
-    password: 'root',
+    password: '',
     database: 'mediclick',
-    port: 8889
+    port: 3306
 };
 
 const pool = mysql.createPool(dbConfig); // Crea el pool de conexiones una vez

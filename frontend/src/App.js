@@ -9,6 +9,7 @@ import Dashboard from './Pages/Admin/Dashboard';
 import UserManagement from './Pages/Admin/Users';
 import ForgotPassword from './Auth/ForgotPassword';
 import ResetPassword from './Auth/ResetPassword';
+import ScheduleAppointment from './Pages/Client/ScheduleAppointment';
 
 function App() {
   const [userName, setUserName] = useState('');
@@ -82,6 +83,11 @@ function App() {
             path="/forgot-password"
             element={<ForgotPassword setUserName={setUserName} setUserRole={setUserRole} />}
           />
+          <Route
+  path="/schedule-appointment"
+  element={<ScheduleAppointment />}
+/>
+
           <Route
             path="/reset-password/:token"
             element={<ResetPassword setUserName={setUserName} />}

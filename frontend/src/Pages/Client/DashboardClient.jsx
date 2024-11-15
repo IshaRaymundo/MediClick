@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { FaHeartbeat, FaBrain, FaBaby, FaTooth, FaBone, FaEye, FaAppleAlt, FaSearch } from 'react-icons/fa';
 import Navbar from '../../Components/Navbar';
 import Sidebar from '../../Components/Sidebar';
+import { useNavigate } from 'react-router-dom';
 
-const DoctorCard = ({ name, description, price }) => (
+const DoctorCard = ({ name, description, price, onSchedule }) => (
   <div className="bg-gray-100 p-4 rounded-lg flex items-center w-full max-w-5xl mx-auto">
     <img
       src="https://via.placeholder.com/120"
@@ -15,7 +16,7 @@ const DoctorCard = ({ name, description, price }) => (
       <p className="text-gray-500 text-sm mb-2">{description}</p>
       <div className="flex items-center justify-between mt-2">
         <p className="text-lg font-semibold">${price}</p>
-        <button className="bg-blue-800 text-white px-4 py-1 rounded-full">Agendar</button>
+        <button className="bg-blue-800 text-white px-4 py-1 rounded-full" onClick={onSchedule}>Agendar</button>
       </div>
     </div>
   </div>
@@ -33,9 +34,14 @@ const specialties = [
 
 const DoctorList = ({ userName, setUserName, userRole, handleLogout }) => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const navigate = useNavigate();
 
   const toggleSidebar = () => {
     setIsSidebarExpanded(!isSidebarExpanded);
+  };
+
+  const handleScheduleClick = () => {
+    navigate('/schedule-appointment');
   };
 
   const doctors = [
@@ -87,7 +93,7 @@ const DoctorList = ({ userName, setUserName, userRole, handleLogout }) => {
             <h2 className="text-xl font-bold mb-4 text-left ml-4">Doctores disponibles</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {doctors.map((doctor, index) => (
-                <DoctorCard key={index} {...doctor} />
+                <DoctorCard key={index} {...doctor} onSchedule={handleScheduleClick} />
               ))}
             </div>
           </section>
