@@ -7,12 +7,12 @@ const DashboardDoc = ({ userName, userRole, handleLogout }) => {
 
   return (
     <div className="flex">
-      <Sidebar isExpanded={isSidebarExpanded} userName={userName} userRole={userRole} />
+      <Sidebar isExpanded={isSidebarExpanded} userName={userName} userRole={userRole} handleLogout={handleLogout} />
       <div className="flex-1">
         <Navbar
           userName={userName}
           toggleSidebar={() => setIsSidebarExpanded(!isSidebarExpanded)}
-          handleLogout={handleLogout} 
+          isSidebarExpanded={isSidebarExpanded}
         />
 
         <div className="flex flex-col items-center justify-center min-h-screen bg-green-50">

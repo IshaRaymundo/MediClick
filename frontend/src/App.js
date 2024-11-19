@@ -83,10 +83,6 @@ function App() {
             path="/forgot-password"
             element={<ForgotPassword setUserName={setUserName} setUserRole={setUserRole} />}
           />
-          <Route
-  path="/schedule-appointment"
-  element={<ScheduleAppointment />}
-/>
 
           <Route
             path="/reset-password/:token"
@@ -134,6 +130,22 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/schedule-appointment"
+            element={
+              <ProtectedRoute roleRequired={3}>
+                <ScheduleAppointment
+                  userName={userName}
+                  userRole={userRole}
+                  setUserName={setUserName}
+                  setUserRole={setUserRole}
+                  handleLogout={handleLogout}
+                />
+              </ProtectedRoute>
+            }
+          />
+
         </Routes>
       )}
     </Router>

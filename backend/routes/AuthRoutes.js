@@ -3,9 +3,13 @@ const express = require('express');
 const AuthController = require('../controller/Auth/AuthController');
 const UsersController = require('../controller/Cruds/Users');
 const ForgotPasswordController = require('../controller/Auth/ForgotPassword');
+const ClientController = require('../controller/Dashboard/Client');
 
 const router = express.Router();
 
+// Rutas para doctores y especialidades
+router.get('/doctors', ClientController.getDoctors);
+router.get('/especialidades', ClientController.getEspecialidades);
 
 // Authentication routes
 router.post('/register', AuthController.register);

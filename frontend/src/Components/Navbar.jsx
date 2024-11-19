@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaUser, FaBars } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
-const Navbar = ({ userName, toggleSidebar, handleLogout }) => {
+const Navbar = ({ userName, toggleSidebar, isSidebarExpanded }) => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -15,10 +15,6 @@ const Navbar = ({ userName, toggleSidebar, handleLogout }) => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
-  const handleLogoutClick = () => {
-    handleLogout(); 
-    navigate('/'); 
-  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -33,12 +29,22 @@ const Navbar = ({ userName, toggleSidebar, handleLogout }) => {
   }, []);
 
   return (
-    <nav className="bg-white text-blue-700 p-4 flex justify-between items-center">
+    <nav className="bg-white text-blue-700 flex justify-between items-center">
       <div className="flex items-center">
         <button onClick={toggleSidebar} className="text-2xl mr-6 ml-4 focus:outline-none">
           <FaBars />
         </button>
-        <h1 className="text-2xl font-bold">MediClick</h1>
+        <div
+          className={`flex items-center space-x-2 transition-opacity duration-300 ${
+            isSidebarExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+        >
+          <img
+            src="/Mediclick azul.png" // Reemplaza con la ruta de tu logo
+            alt="Logo MediClick"
+            className="w-44 h-24 object-contain" // Ajusta el tamaño según tus necesidades
+          />
+        </div>
       </div>
       <div className="relative flex items-center">
         {userName ? (
@@ -55,11 +61,11 @@ const Navbar = ({ userName, toggleSidebar, handleLogout }) => {
               }`}
             >
               <ul className="text-gray-700">
-                <li onClick={() => navigate('/profile')} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                <li
+                  onClick={() => navigate('/profile')}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                >
                   Perfil
-                </li>
-                <li onClick={handleLogoutClick} className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600">
-                  Cerrar sesión
                 </li>
               </ul>
             </div>

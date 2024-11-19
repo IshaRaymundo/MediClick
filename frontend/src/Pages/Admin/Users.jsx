@@ -124,12 +124,12 @@ const UserManagement = ({ userName, userRole, handleLogout }) => {
 
   return (
     <div className="flex">
-      <Sidebar isExpanded={isSidebarExpanded} userName={userName} userRole={userRole} />
+      <Sidebar isExpanded={isSidebarExpanded} userName={userName} userRole={userRole} handleLogout={handleLogout}/>
       <div className="flex-1">
         <Navbar
           userName={userName}
           toggleSidebar={() => setIsSidebarExpanded(!isSidebarExpanded)}
-          handleLogout={handleLogout} 
+          isSidebarExpanded={isSidebarExpanded}
         />
         <div className="p-8 bg-gray-100 min-h-screen">
           <div className="flex justify-between items-center mb-6">

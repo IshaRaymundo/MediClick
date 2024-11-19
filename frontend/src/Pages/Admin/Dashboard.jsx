@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaUserFriends, FaUserMd, FaStethoscope } from 'react-icons/fa';
+import { FaUserFriends, FaStethoscope } from 'react-icons/fa';
 import Navbar from '../../Components/Navbar';
 import Sidebar from '../../Components/Sidebar';
 import { useNavigate } from 'react-router-dom';
@@ -33,12 +33,12 @@ const Dashboard = ({ userName, userRole, setUserName, setUserRole, handleLogout 
 
   return (
     <div className="flex">
-      <Sidebar isExpanded={isSidebarExpanded} userName={userName} userRole={userRole} />
+      <Sidebar isExpanded={isSidebarExpanded} userName={userName} userRole={userRole} handleLogout={handleLogout}/>
       <div className="flex-1">
       <Navbar
           userName={userName}
           toggleSidebar={() => setIsSidebarExpanded(!isSidebarExpanded)}
-          handleLogout={handleLogout} 
+          isSidebarExpanded={isSidebarExpanded}
         />
         <div className="p-8 bg-gray-100 min-h-screen flex flex-col items-center">
           <h1 className="text-4xl font-bold text-center text-gray-800 mb-8">Dashboard de Administración</h1>
