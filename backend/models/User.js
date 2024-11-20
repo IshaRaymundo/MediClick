@@ -25,6 +25,19 @@ class User {
         }
     }
 
+
+static async findById(id) {
+    await checkConnection();
+    const connection = await pool.getConnection();
+    try {
+        const [result] = await connection.execute('SELECT * FROM users WHERE id = ?', [id]);
+        return result[0];
+    } finally {
+        connection.release();
+    }
+}
+
+
     static async createUser(username, password, email) {
         await checkConnection();
         const connection = await pool.getConnection();
@@ -38,6 +51,31 @@ class User {
         }
     }
 
+        // Método para que el administrador cree usuarios y seleccione el rol
+        static async createUserWithRole(username, email, password, role_id) {
+            await checkConnection();
+            const connection = await pool.getConnection();
+            try {
+                // Verificar si el usuario o el correo ya existen
+                const [existingUsers] = await connection.execute(
+                    'SELECT * FROM users WHERE username = ? OR email = ?',
+                    [username, email]
+                );
+    
+                if (existingUsers.length > 0) {
+                    throw new Error('Usuario o correo ya existen');
+                }
+    
+                const hashedPassword = await bcrypt.hash(password, 10);
+                await connection.execute(
+                    'INSERT INTO users (username, email, password, role_id) VALUES (?, ?, ?, ?)',
+                    [username, email, hashedPassword, role_id]
+                );
+            } finally {
+                connection.release();
+            }
+        }
+
     static async getAllUsers() {
         await checkConnection();
         const connection = await pool.getConnection();
@@ -49,28 +87,27 @@ class User {
         }
     }
 
-    static async updateUser(id, username, email, password) {
+    static async updateUser(id, username, email, role_id, password) {
         await checkConnection();
         const connection = await pool.getConnection();
         try {
             if (password) {
-                // Si se proporciona una nueva contraseña, la encripta
                 const hashedPassword = await bcrypt.hash(password, 10);
                 await connection.execute(
-                    'UPDATE users SET username = ?, email = ?, password = ? WHERE id = ?',
-                    [username, email, hashedPassword, id]
+                    'UPDATE users SET username = ?, email = ?, role_id = ?, password = ? WHERE id = ?',
+                    [username, email, role_id, hashedPassword, id]
                 );
             } else {
-                // Si no hay nueva contraseña, solo actualiza el nombre y correo
                 await connection.execute(
-                    'UPDATE users SET username = ?, email = ? WHERE id = ?',
-                    [username, email, id]
+                    'UPDATE users SET username = ?, email = ?, role_id = ? WHERE id = ?',
+                    [username, email, role_id, id]
                 );
             }
         } finally {
             connection.release();
         }
     }
+    
 
     static async updateUserRole(id, role_id) {
         await checkConnection();

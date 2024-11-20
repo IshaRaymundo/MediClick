@@ -1,60 +1,127 @@
-import React, { useState } from 'react';
-import { FaHeartbeat, FaBrain, FaBaby, FaTooth, FaBone, FaEye, FaAppleAlt, FaSearch } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../../Components/Navbar';
 import Sidebar from '../../Components/Sidebar';
+import Specialties from '../../Components/Specialties';
+import DoctorModal from '../../Components/DoctorModal';
+import axios from 'axios';
+// import { FaSearch } from 'react-icons/fa';
 
-const DoctorCard = ({ name, description, price }) => (
-  <div className="bg-gray-100 p-4 rounded-lg flex items-center w-full max-w-5xl mx-auto">
-    <img
-      src="https://via.placeholder.com/120"
-      alt="Doctor"
-      className="w-32 h-32 rounded-full mr-6"
-    />
-    <div className="flex flex-col flex-grow">
-      <h3 className="text-lg font-semibold">{name}</h3>
-      <p className="text-gray-500 text-sm mb-2">{description}</p>
-      <div className="flex items-center justify-between mt-2">
-        <p className="text-lg font-semibold">${price}</p>
-        <button className="bg-blue-800 text-white px-4 py-1 rounded-full">Agendar</button>
+// Función para truncar texto
+const truncateText = (text, maxLength) => {
+  if (text.length > maxLength) {
+    return text.substring(0, maxLength) + '...';
+  }
+  return text;
+};
+
+// Componente para mostrar cada doctor
+const DoctorCard = ({ name, especialidad, description, price, onSchedule }) => (
+  <div className="bg-white p-4 rounded-xl flex flex-col sm:flex-row items-center w-full max-w-5xl mx-auto shadow-lg hover:shadow-2xl transition-all">
+    <div className="flex flex-col items-center mb-4 sm:mb-0 sm:mr-6">
+      <img
+        src="https://via.placeholder.com/120"
+        alt="Doctor"
+        className="w-24 h-24 sm:w-32 sm:h-32 rounded-full mb-2"
+      />
+      <p className="text-xs sm:text-sm text-gray-600 font-extralight">{especialidad}</p>
+    </div>
+    <div className="flex flex-col flex-grow text-center sm:text-left">
+      <h3 className="text-lg sm:text-xl font-semibold">{name}</h3>
+      <p className="text-gray-500 text-sm mb-2">{truncateText(description, 30)}</p>
+      <div className="flex flex-col sm:flex-row items-center justify-between mt-2">
+        <p className="text-lg font-semibold mb-2 sm:mb-0">${price}</p>
+        <button
+          className="bg-teal-600 text-white px-4 py-1 rounded-full transition-all hover:bg-teal-700"
+          onClick={onSchedule}
+        >
+          Ver más
+        </button>
       </div>
     </div>
   </div>
 );
 
-const specialties = [
-  { icon: <FaHeartbeat className="w-10 h-10 text-white" />, name: 'Cardiología' },
-  { icon: <FaBrain className="w-10 h-10 text-white" />, name: 'Neurología' },
-  { icon: <FaBaby className="w-10 h-10 text-white" />, name: 'Pediatría' },
-  { icon: <FaTooth className="w-10 h-10 text-white" />, name: 'Odontología' },
-  { icon: <FaBone className="w-10 h-10 text-white" />, name: 'Ortopedia' },
-  { icon: <FaEye className="w-10 h-10 text-white" />, name: 'Oftalmología' },
-  { icon: <FaAppleAlt className="w-10 h-10 text-white" />, name: 'Nutriología' },
-];
-
-const DoctorList = ({ userName, setUserName, userRole, handleLogout }) => {
+const DoctorList = ({ userName, userRole, handleLogout }) => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [specialties, setSpecialties] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [filteredDoctors, setFilteredDoctors] = useState([]);
+  const [selectedSpecialty, setSelectedSpecialty] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
 
   const toggleSidebar = () => {
     setIsSidebarExpanded(!isSidebarExpanded);
   };
 
-  const doctors = [
-    { name: 'Dr. Lorem Ipsum', description: 'Especialista en cuidados médicos generales', price: 12 },
-    { name: 'Dr. John Doe', description: 'Experto en pediatría y salud infantil', price: 15 },
-    { name: 'Dra. Jane Smith', description: 'Odontología avanzada y estética dental', price: 20 },
-    { name: 'Dr. Albert Tan', description: 'Ortopedia y tratamiento de lesiones deportivas', price: 18 },
-    { name: 'Dra. Clara Lee', description: 'Nutriología y salud dietética', price: 25 },
-    { name: 'Dr. Mark White', description: 'Especialista en neurología y salud cerebral', price: 30 },
-  ];
+  const handleOpenModal = (doctor) => {
+    setSelectedDoctor(doctor);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedDoctor(null);
+  };
+
+  // Cargar especialidades desde la API
+  useEffect(() => {
+    const fetchSpecialties = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/especialidades');
+        setSpecialties(response.data);
+      } catch (error) {
+        console.error('Error al obtener especialidades:', error);
+      }
+    };
+
+    fetchSpecialties();
+  }, []);
+
+  // Cargar doctores desde la API
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/doctors');
+        setDoctors(response.data);
+        setFilteredDoctors(response.data.sort(() => 0.5 - Math.random()).slice(0, 6)); // Doctores aleatorios
+      } catch (error) {
+        console.error('Error al obtener doctores:', error);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
+
+  // Filtrar doctores por especialidad
+  const handleSpecialtySelect = (specialtyName) => {
+    setSelectedSpecialty(specialtyName);
+
+    if (specialtyName) {
+      const filtered = doctors.filter(
+        (doctor) =>
+          doctor.especialidad &&
+          doctor.especialidad.toLowerCase() === specialtyName.toLowerCase()
+      );
+      setFilteredDoctors(filtered);
+    } else {
+      // Si no hay especialidad seleccionada, muestra doctores aleatorios
+      setFilteredDoctors(doctors.sort(() => 0.5 - Math.random()).slice(0, 6));
+    }
+  };
 
   return (
-    <div className="flex">
-      <Sidebar isExpanded={isSidebarExpanded} userName={userName} userRole={userRole} />
+    <div className="flex bg-gray-50">
+      <Sidebar isExpanded={isSidebarExpanded} userName={userName} userRole={userRole} handleLogout={handleLogout} />
       <div className="flex-1">
-        <Navbar userName={userName} toggleSidebar={toggleSidebar} handleLogout={handleLogout} />
+        <Navbar
+          userName={userName}
+          toggleSidebar={toggleSidebar}
+          isSidebarExpanded={isSidebarExpanded}
+        />
 
-        <div className="px-8 py-4 flex flex-col items-center">
-          <header className="flex justify-between items-center w-full max-w-4xl mb-8">
+        <div className="px-4 sm:px-8 py-4 flex flex-col items-center">
+          {/* <header className="flex justify-between items-center w-full max-w-4xl mb-8">
             <div className="relative w-full">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                 <FaSearch className="text-gray-800" />
@@ -62,37 +129,46 @@ const DoctorList = ({ userName, setUserName, userRole, handleLogout }) => {
               <input
                 type="text"
                 placeholder="Ingresa un nombre o doctor"
-                className="w-full p-2 pl-10 rounded-full border border-gray-300 bg-gray-100"
+                className="w-full p-2 pl-10 rounded-full border border-gray-300 bg-gray-100 focus:ring focus:ring-blue-300"
               />
             </div>
-          </header>
+          </header> */}
 
           <section className="mb-8 w-full max-w-4xl">
-            <h2 className="text-xl font-bold mb-4 text-left ml-4">Especialidades</h2>
-            <div className="flex justify-center space-x-8">
-              {specialties.map((specialty, index) => (
-                <div key={index} className="flex flex-col items-center">
-                  <div className="w-20 h-20 bg-blue-800 rounded-full flex items-center justify-center">
-                    {specialty.icon}
-                  </div>
-                  <p className="text-center text-sm mt-2">{specialty.name}</p>
-                </div>
-              ))}
-            </div>
+            <h2 className="text-lg sm:text-xl font-bold mb-4 text-left ml-4 text-blue-900">Especialidades</h2>
+            <Specialties specialties={specialties} onSelect={handleSpecialtySelect} />
           </section>
         </div>
 
         <div className="w-full flex justify-center">
           <section className="w-full max-w-6xl">
-            <h2 className="text-xl font-bold mb-4 text-left ml-4">Doctores disponibles</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {doctors.map((doctor, index) => (
-                <DoctorCard key={index} {...doctor} />
+            <h2 className="text-lg sm:text-xl font-bold mb-4 text-left ml-4 text-blue-900">
+              {selectedSpecialty
+                ? `Doctores de ${selectedSpecialty}`
+                : 'Doctores disponibles'}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredDoctors.map((doctor, index) => (
+                <DoctorCard
+                  key={index}
+                  name={doctor.doctor_name}
+                  description={doctor.informacion}
+                  photo={doctor.foto_url}
+                  especialidad={doctor.especialidad}
+                  price={Math.floor(Math.random() * 50) + 10}
+                  onSchedule={() => handleOpenModal(doctor)}
+                />
               ))}
             </div>
           </section>
         </div>
       </div>
+
+      <DoctorModal
+        isOpen={isModalOpen}
+        doctor={selectedDoctor}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 };

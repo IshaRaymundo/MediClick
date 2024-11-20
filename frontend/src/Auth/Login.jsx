@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
-const Login = ({ setUserName, setUserRole }) => {
+const Login = ({ setUserName, setUserRole, setUserEmail }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // Estado para mostrar/ocultar contraseña
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -14,29 +14,35 @@ const Login = ({ setUserName, setUserRole }) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post('http://localhost:3000/login', {
-        username,
-        password,
-      });
+        const response = await axios.post('http://localhost:3000/login', {
+            username,
+            password,
+        });
+        console.log("Respuesta de la API:", response.data);
 
-      localStorage.setItem('token', response.data.token);
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('username', username);
+        localStorage.setItem('role', response.data.role);
+        localStorage.setItem('email', response.data.email);
+        localStorage.setItem('userId', response.data.userId); // Guardar el userId
 
-      setUserName(username);
-      setUserRole(response.data.role);
-      localStorage.setItem('username', username); 
-      localStorage.setItem('role', response.data.role); 
-      // Redirigir al usuario según su rol
-      if (response.data.role === 1) {
-        navigate('/admin-dashboard');
-      } else if (response.data.role === 2) {
-        navigate('/dashboard-doc');
-      } else {
-        navigate('/');
-      }
+        setUserName(username);
+        setUserRole(response.data.role);
+        setUserEmail(response.data.email);
+
+        if (response.data.role === 1) {
+            navigate('/admin-dashboard');
+        } else if (response.data.role === 2) {
+            navigate('/dashboard-doc');
+        } else {
+            navigate('/');
+        }
     } catch (err) {
-      setError(err.response?.data?.message || 'Error en el servidor');
+        setError(err.response?.data?.message || 'Error en el servidor');
+        console.error("Error en login:", err.response?.data || err);
     }
-  };
+};
+
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -85,6 +91,12 @@ const Login = ({ setUserName, setUserRole }) => {
           ¿No tienes una cuenta?{' '}
           <a href="/register" className="text-blue-600 hover:underline">
             Regístrate
+          </a>
+        </p>
+        <p className="mt-4 text-center text-gray-500">
+          ¿Olvidaste tu contraseña?{' '}
+          <a href="/forgot-password" className="text-blue-600 hover:underline">
+            Recuperar
           </a>
         </p>
         <button

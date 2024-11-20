@@ -13,12 +13,29 @@ class UsersController {
         }
     }
 
+
+        // Método para que el administrador cree usuarios con cualquier rol
+        static async createUserWithRole(req, res) {
+            const { username, email, password, role_id } = req.body;
+            try {
+                await User.createUserWithRole(username, email, password, role_id);
+                res.status(201).json({ message: 'Usuario creado exitosamente' });
+            } catch (error) {
+                console.error('Error al crear usuario:', error.message);
+                if (error.message === 'Usuario o correo ya existen') {
+                    res.status(400).json({ message: 'El nombre de usuario o correo ya están en uso' });
+                } else {
+                    res.status(500).json({ message: 'Error al crear usuario' });
+                }
+            }
+        }
+
     static async updateUser(req, res) {
         const { id } = req.params;
         const { username, email, role_id, password } = req.body; // Incluye `password` en el body
         try {
             // Pasa `password` solo si está presente
-            await User.updateUser(id, username, email, password || null);
+            await User.updateUser(id, username, email, role_id, password || null);
             res.status(200).json({ message: 'Usuario actualizado correctamente' });
         } catch (error) {
             console.error('Error al actualizar usuario:', error);
