@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
-const Login = ({ setUserName, setUserRole }) => {
+const Login = ({ setUserName, setUserRole, setUserEmail }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -14,30 +14,35 @@ const Login = ({ setUserName, setUserRole }) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post('http://localhost:3000/login', {
-        username,
-        password,
-      });
+        const response = await axios.post('http://localhost:3000/login', {
+            username,
+            password,
+        });
+        console.log("Respuesta de la API:", response.data);
 
-      localStorage.setItem('token', response.data.token);
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('username', username);
+        localStorage.setItem('role', response.data.role);
+        localStorage.setItem('email', response.data.email);
+        localStorage.setItem('userId', response.data.userId); // Guardar el userId
 
-      setUserName(username);
-      setUserRole(response.data.role);
-      localStorage.setItem('username', username);
-      localStorage.setItem('role', response.data.role);
+        setUserName(username);
+        setUserRole(response.data.role);
+        setUserEmail(response.data.email);
 
-      if (response.data.role === 1) {
-        navigate('/admin-dashboard');
-      } else if (response.data.role === 2) {
-        navigate('/dashboard-doc');
-      } else {
-        navigate('/');
-      }
+        if (response.data.role === 1) {
+            navigate('/admin-dashboard');
+        } else if (response.data.role === 2) {
+            navigate('/dashboard-doc');
+        } else {
+            navigate('/');
+        }
     } catch (err) {
-      setError(err.response?.data?.message || 'Error en el servidor');
-      console.error("Error en login:", err.response?.data || err);
+        setError(err.response?.data?.message || 'Error en el servidor');
+        console.error("Error en login:", err.response?.data || err);
     }
-  };
+};
+
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);

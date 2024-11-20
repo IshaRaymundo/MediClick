@@ -10,35 +10,47 @@ import UserManagement from './Pages/Admin/Users';
 import ForgotPassword from './Auth/ForgotPassword';
 import ResetPassword from './Auth/ResetPassword';
 import ScheduleAppointment from './Pages/Client/ScheduleAppointment';
+import Appointments from './Pages/Client/Appointments';
+import UserProfile from './Components/Profile';
 
 function App() {
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState('');
+
 
   useEffect(() => {
     const savedUserName = localStorage.getItem('username');
     const savedUserRole = localStorage.getItem('role');
+    const savedUserEmail = localStorage.getItem('email');
+  
     if (savedUserName && savedUserRole) {
       setUserName(savedUserName);
       setUserRole(Number(savedUserRole));
+      setUserEmail(savedUserEmail || "Correo no disponible");
     }
     setIsLoading(false);
   }, []);
+  
 
   useEffect(() => {
     if (userName && userRole !== null) {
       localStorage.setItem('username', userName);
       localStorage.setItem('role', userRole);
+      localStorage.setItem('email', userEmail);
     }
-  }, [userName, userRole]);
+  }, [userName, userRole, userEmail]);
 
   const handleLogout = () => {
     setUserName(null);
     setUserRole(null);
+    setUserEmail(null); 
     localStorage.removeItem('username');
     localStorage.removeItem('role');
+    localStorage.removeItem('email');
   };
+  
 
   const ProtectedRoute = ({ roleRequired, children }) => {
     if (isLoading) return null;
@@ -73,7 +85,7 @@ function App() {
           />
           <Route
             path="/login"
-            element={<Login setUserName={setUserName} setUserRole={setUserRole} />}
+            element={<Login setUserName={setUserName} setUserRole={setUserRole} setUserEmail={setUserEmail} />}
           />
           <Route
             path="/register"
@@ -145,6 +157,34 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/appointments"
+            element={
+              <ProtectedRoute roleRequired={3}>
+                <Appointments
+                  userName={userName}
+                  userRole={userRole}
+                  setUserName={setUserName}
+                  setUserRole={setUserRole}
+                  handleLogout={handleLogout}
+                />
+              </ProtectedRoute>
+            }
+          />
+
+<Route
+  path="/perfil"
+  element={
+    <UserProfile
+      userName={userName}
+      userEmail={userEmail}
+      userRole={userRole}
+      handleLogout={handleLogout}
+    />
+  }
+/>
+
 
         </Routes>
       )}

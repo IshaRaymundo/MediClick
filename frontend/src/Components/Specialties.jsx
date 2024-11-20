@@ -55,7 +55,7 @@ const Specialties = ({ specialties, onSelect }) => {
           className="flex flex-col items-center cursor-pointer group"
           onClick={() => onSelect(specialty.nombre)}
         >
-          <div className="w-20 h-20 bg-blue-800 rounded-full flex items-center justify-center transform transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg">
+          <div className="w-20 h-20 bg-blue-900 rounded-full flex items-center justify-center transform transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg">
             {getSpecialtyIcon(specialty.nombre)}
           </div>
           <p className="text-center text-sm mt-2 transition-all duration-300 group-hover:text-blue-800">

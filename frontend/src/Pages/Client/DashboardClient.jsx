@@ -4,7 +4,7 @@ import Sidebar from '../../Components/Sidebar';
 import Specialties from '../../Components/Specialties';
 import DoctorModal from '../../Components/DoctorModal';
 import axios from 'axios';
-import { FaSearch } from 'react-icons/fa';
+// import { FaSearch } from 'react-icons/fa';
 
 // Función para truncar texto
 const truncateText = (text, maxLength) => {
@@ -16,7 +16,7 @@ const truncateText = (text, maxLength) => {
 
 // Componente para mostrar cada doctor
 const DoctorCard = ({ name, especialidad, description, price, onSchedule }) => (
-  <div className="bg-gray-100 p-4 rounded-lg flex flex-col sm:flex-row items-center w-full max-w-5xl mx-auto shadow-md hover:shadow-lg transition-all">
+  <div className="bg-white p-4 rounded-xl flex flex-col sm:flex-row items-center w-full max-w-5xl mx-auto shadow-lg hover:shadow-2xl transition-all">
     <div className="flex flex-col items-center mb-4 sm:mb-0 sm:mr-6">
       <img
         src="https://via.placeholder.com/120"
@@ -31,7 +31,7 @@ const DoctorCard = ({ name, especialidad, description, price, onSchedule }) => (
       <div className="flex flex-col sm:flex-row items-center justify-between mt-2">
         <p className="text-lg font-semibold mb-2 sm:mb-0">${price}</p>
         <button
-          className="bg-blue-800 text-white px-4 py-1 rounded-full transition-all hover:bg-blue-700"
+          className="bg-teal-600 text-white px-4 py-1 rounded-full transition-all hover:bg-teal-700"
           onClick={onSchedule}
         >
           Ver más
@@ -106,12 +106,12 @@ const DoctorList = ({ userName, userRole, handleLogout }) => {
       setFilteredDoctors(filtered);
     } else {
       // Si no hay especialidad seleccionada, muestra doctores aleatorios
-      setFilteredDoctors(doctors.sort(() => 0.5 - Math.random()).slice(0, 9));
+      setFilteredDoctors(doctors.sort(() => 0.5 - Math.random()).slice(0, 6));
     }
   };
 
   return (
-    <div className="flex">
+    <div className="flex bg-gray-50">
       <Sidebar isExpanded={isSidebarExpanded} userName={userName} userRole={userRole} handleLogout={handleLogout} />
       <div className="flex-1">
         <Navbar
@@ -135,14 +135,14 @@ const DoctorList = ({ userName, userRole, handleLogout }) => {
           </header> */}
 
           <section className="mb-8 w-full max-w-4xl">
-            <h2 className="text-lg sm:text-xl font-bold mb-4 text-left ml-4">Especialidades</h2>
+            <h2 className="text-lg sm:text-xl font-bold mb-4 text-left ml-4 text-blue-900">Especialidades</h2>
             <Specialties specialties={specialties} onSelect={handleSpecialtySelect} />
           </section>
         </div>
 
         <div className="w-full flex justify-center">
           <section className="w-full max-w-6xl">
-            <h2 className="text-lg sm:text-xl font-bold mb-4 text-left ml-4">
+            <h2 className="text-lg sm:text-xl font-bold mb-4 text-left ml-4 text-blue-900">
               {selectedSpecialty
                 ? `Doctores de ${selectedSpecialty}`
                 : 'Doctores disponibles'}

@@ -29,23 +29,31 @@ class AuthController {
             if (!user) {
                 return res.status(400).json({ message: 'Usuario o contraseña incorrectos' });
             }
-
+    
             const isPasswordMatch = await bcrypt.compare(password, user.password);
             if (!isPasswordMatch) {
                 return res.status(400).json({ message: 'Usuario o contraseña incorrectos' });
             }
-
+    
             const token = jwt.sign(
                 { id: user.id, role: user.role_id, username: user.username },
                 SECRET_KEY,
                 { expiresIn: '1h' }
             );
-            res.json({ token, role: user.role_id, message: 'Inicio de sesión exitoso' });
+            // Agregar user.id en la respuesta
+            res.json({
+                token,
+                role: user.role_id,
+                email: user.email, // Asegurarte de devolver el correo
+                userId: user.id, // Enviar el userId aquí
+                message: 'Inicio de sesión exitoso'
+            });
         } catch (error) {
             console.error('Error en el login:', error);
             res.status(500).json({ message: 'Error en el servidor' });
         }
     }
+    
 
     static async getUsers(req, res) {
         try {

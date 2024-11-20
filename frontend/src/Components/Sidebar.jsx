@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import {
   HomeIcon,
   CalendarIcon,
@@ -7,12 +8,18 @@ import {
   ChevronDownIcon,
   ClipboardDocumentListIcon,
   UsersIcon,
-  ArrowRightOnRectangleIcon, // Icono para "Cerrar sesión"
+  ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 
-const Sidebar = ({ userName, userRole, isExpanded, handleLogout, isAuthenticated }) => {
+const Sidebar = ({
+  userName,
+  userRole,
+  isExpanded,
+  handleLogout,
+  isAuthenticated,
+}) => {
   const [activeSubMenu, setActiveSubMenu] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(true); // Controla si el usuario está logueado
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
   const navigate = useNavigate();
 
   const toggleSubMenu = (menuName) => {
@@ -22,30 +29,53 @@ const Sidebar = ({ userName, userRole, isExpanded, handleLogout, isAuthenticated
   };
 
   const handleLogoutClick = () => {
-    handleLogout();
-    setIsLoggedIn(false); // Cambia el estado a no logueado
-    navigate("/");
+    Swal.fire({
+      title: "¿Estás seguro?",
+      text: "¿Quieres cerrar sesión?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí, cerrar sesión",
+      cancelButtonText: "Cancelar",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: "¡Sesión cerrada!",
+          text: "Has cerrado sesión exitosamente.",
+          icon: "success",
+          timer: 2000,
+          showConfirmButton: false,
+        }).then(() => {
+          handleLogout(); // Llama a la función de cierre de sesión
+          setIsLoggedIn(false); // Actualiza el estado del login
+          navigate("/"); // Redirige al usuario al inicio
+        });
+      }
+    });
   };
 
   return (
     <div
       className={`flex flex-col ${
         isExpanded ? "w-64" : "w-16"
-      } bg-blue-200 min-h-screen p-4 transition-width duration-300`}
+      } bg-gradient-to-b from-blue-700 to-blue-950 min-h-screen p-4 transition-width duration-300 shadow-xl rounded-tr-3xl rounded-br-3xl`}
     >
       {/* Logo */}
-      <div className="flex flex-col items-center mb-8 ">
+      <div className="flex flex-col items-center mb-8">
         <img
-          src="/Mediclick azul.png" // Reemplaza con la ruta de tu logo
+          src="/Mediclick logo trans.png"
           alt="Logo"
-          className={`mb-2 ${isExpanded ? "w-44 h-20" : "w-0 h-0"} transition-all duration-300`}
+          className={`mb-2 ${
+            isExpanded ? "w-44 h-20" : "w-0 h-0"
+          } transition-all duration-300`}
         />
       </div>
 
-      {/* Contenedor del menú */}
+      {/* Menú */}
       <div className="flex-grow w-full">
         {isExpanded && (
-          <p className="text-lg font-bold mb-9 transition-opacity duration-300 opacity-100">
+          <p className="text-white text-lg font-bold mb-9 transition-opacity duration-300 opacity-100">
             Menú
           </p>
         )}
@@ -55,7 +85,7 @@ const Sidebar = ({ userName, userRole, isExpanded, handleLogout, isAuthenticated
           <>
             <Link
               to="/"
-              className="flex items-center w-full mb-4 p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+              className="flex items-center w-full mb-4 p-2 rounded-lg hover:bg-blue-700 hover:shadow-md text-white transition-all duration-300"
             >
               <HomeIcon
                 className={`transition-all duration-300 ${
@@ -65,11 +95,11 @@ const Sidebar = ({ userName, userRole, isExpanded, handleLogout, isAuthenticated
               {isExpanded && <span className="ml-4 font-medium">Home</span>}
             </Link>
 
-            {/* Botón Mis Citas con Submenú */}
+            {/* Submenú: Mis Citas */}
             <div>
               <button
                 onClick={() => toggleSubMenu("misCitas")}
-                className="flex items-center justify-between w-full mb-4 p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+                className="flex items-center justify-between w-full mb-4 p-2 rounded-lg hover:bg-blue-700 hover:shadow-md text-white transition-all duration-300"
               >
                 <div className="flex items-center">
                   <CalendarIcon
@@ -98,14 +128,16 @@ const Sidebar = ({ userName, userRole, isExpanded, handleLogout, isAuthenticated
               >
                 <div className="text-center">
                   <Link
-                    to="/mis-citas/pasadas"
-                    className="block mb-2 p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+                    to="/appointments"
+                    state={{ view: "past" }}
+                    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
                   >
                     Pasadas
                   </Link>
                   <Link
-                    to="/mis-citas/proximas"
-                    className="block p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+                    to="/appointments"
+                    state={{ view: "upcoming" }}
+                    className="block p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
                   >
                     Próximas
                   </Link>
@@ -113,11 +145,11 @@ const Sidebar = ({ userName, userRole, isExpanded, handleLogout, isAuthenticated
               </div>
             </div>
 
-            {/* Botón Especialidades con Submenú */}
+            {/* Submenú: Especialidades */}
             <div>
               <button
                 onClick={() => toggleSubMenu("especialidades")}
-                className="flex items-center justify-between w-full mb-4 p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+                className="flex items-center justify-between w-full mb-4 p-2 rounded-lg hover:bg-blue-700 hover:shadow-md text-white transition-all duration-300"
               >
                 <div className="flex items-center">
                   <HeartIcon
@@ -149,43 +181,43 @@ const Sidebar = ({ userName, userRole, isExpanded, handleLogout, isAuthenticated
                 <div className="text-center">
                   <Link
                     to="/especialidades/cardiologia"
-                    className="block mb-2 p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+                    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
                   >
                     Cardiología
                   </Link>
                   <Link
                     to="/especialidades/neurologia"
-                    className="block mb-2 p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+                    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
                   >
                     Neurología
                   </Link>
                   <Link
                     to="/especialidades/odontologia"
-                    className="block mb-2 p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+                    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
                   >
                     Odontología
                   </Link>
                   <Link
                     to="/especialidades/pediatria"
-                    className="block mb-2 p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+                    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
                   >
                     Pediatría
                   </Link>
                   <Link
                     to="/especialidades/ortopedia"
-                    className="block p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+                    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
                   >
                     Ortopedia
                   </Link>
                   <Link
-                    to="/especialidades/ortopedia"
-                    className="block p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+                    to="/especialidades/oftalmologia"
+                    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
                   >
-                    Oftamología
+                    Oftalmología
                   </Link>
                   <Link
-                    to="/especialidades/ortopedia"
-                    className="block p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+                    to="/especialidades/nutriologia"
+                    className="block p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
                   >
                     Nutriología
                   </Link>
@@ -200,7 +232,7 @@ const Sidebar = ({ userName, userRole, isExpanded, handleLogout, isAuthenticated
           <>
             <Link
               to="/dashboard-doc"
-              className="flex items-center w-full mb-4 p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+              className="flex items-center w-full mb-4 p-2 rounded-lg hover:bg-blue-700 hover:shadow-md text-white transition-all duration-300"
             >
               <HomeIcon
                 className={`transition-all duration-300 ${
@@ -211,14 +243,16 @@ const Sidebar = ({ userName, userRole, isExpanded, handleLogout, isAuthenticated
             </Link>
             <Link
               to="/mis-pacientes"
-              className="flex items-center w-full mb-4 p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+              className="flex items-center w-full mb-4 p-2 rounded-lg hover:bg-blue-700 hover:shadow-md text-white transition-all duration-300"
             >
               <ClipboardDocumentListIcon
                 className={`transition-all duration-300 ${
                   isExpanded ? "w-8 h-8" : "w-6 h-6"
                 }`}
               />
-              {isExpanded && <span className="ml-4 font-medium">Mis Pacientes</span>}
+              {isExpanded && (
+                <span className="ml-4 font-medium">Mis Pacientes</span>
+              )}
             </Link>
           </>
         )}
@@ -228,7 +262,7 @@ const Sidebar = ({ userName, userRole, isExpanded, handleLogout, isAuthenticated
           <>
             <Link
               to="/admin-dashboard"
-              className="flex items-center w-full mb-4 p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+              className="flex items-center w-full mb-4 p-2 rounded-lg hover:bg-blue-700 hover:shadow-md text-white transition-all duration-300"
             >
               <HomeIcon
                 className={`transition-all duration-300 ${
@@ -238,8 +272,8 @@ const Sidebar = ({ userName, userRole, isExpanded, handleLogout, isAuthenticated
               {isExpanded && <span className="ml-4 font-medium">Home</span>}
             </Link>
             <Link
-              to="/Users-Admin"
-              className="flex items-center w-full mb-4 p-2 rounded-lg hover:bg-blue-300 text-blue-800"
+              to="/users-admin"
+              className="flex items-center w-full mb-4 p-2 rounded-lg hover:bg-blue-700 hover:shadow-md text-white transition-all duration-300"
             >
               <UsersIcon
                 className={`transition-all duration-300 ${
@@ -252,18 +286,20 @@ const Sidebar = ({ userName, userRole, isExpanded, handleLogout, isAuthenticated
         )}
       </div>
 
-          {/* Botón Cerrar sesión */}
-          {isLoggedIn && (
+      {/* Botón Cerrar sesión */}
+      {isLoggedIn && (
         <button
           onClick={handleLogoutClick}
-          className="flex items-center w-full p-2 rounded-lg hover:bg-red-500 hover:text-white text-red-600 mt-auto"
+          className="flex items-center w-full p-2 rounded-lg hover:bg-red-500 hover:shadow-md text-white mt-auto transition-all duration-300"
         >
           <ArrowRightOnRectangleIcon
             className={`transition-all duration-300 ${
               isExpanded ? "w-8 h-8" : "w-6 h-6"
             }`}
           />
-          {isExpanded && <span className="ml-4 font-medium">Cerrar sesión</span>}
+          {isExpanded && (
+            <span className="ml-4 font-medium">Cerrar sesión</span>
+          )}
         </button>
       )}
     </div>
