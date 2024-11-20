@@ -40,7 +40,7 @@ const Dashboard = ({ userName, userRole, setUserName, setUserRole, handleLogout 
           toggleSidebar={() => setIsSidebarExpanded(!isSidebarExpanded)}
           isSidebarExpanded={isSidebarExpanded}
         />
-        <div className="p-8 bg-gray-100 min-h-screen flex flex-col items-center">
+        <div className="p-8 flex flex-col items-center">
           <h1 className="text-4xl font-bold text-center text-gray-800 mb-8">Dashboard de Administración</h1>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
             {cards.map((card, index) => (
