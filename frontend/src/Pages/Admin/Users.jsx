@@ -84,7 +84,7 @@ const UserManagement = ({ userName, userRole, handleLogout }) => {
 
   const handleAddSubmit = async () => {
     try {
-      await axios.post(`http://localhost:3000/admin/create-user`, {
+      await axios.post(`http://localhost:3000/users/create`, {
         username: newUser.username,
         email: newUser.email,
         password: newUser.password,

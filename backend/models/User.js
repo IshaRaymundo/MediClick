@@ -56,25 +56,47 @@ static async findById(id) {
             await checkConnection();
             const connection = await pool.getConnection();
             try {
+                // Iniciar una transacción
+                await connection.beginTransaction();
+        
                 // Verificar si el usuario o el correo ya existen
                 const [existingUsers] = await connection.execute(
                     'SELECT * FROM users WHERE username = ? OR email = ?',
                     [username, email]
                 );
-    
+        
                 if (existingUsers.length > 0) {
                     throw new Error('Usuario o correo ya existen');
                 }
-    
+        
+                // Crear el usuario en la tabla `users`
                 const hashedPassword = await bcrypt.hash(password, 10);
-                await connection.execute(
+                const [result] = await connection.execute(
                     'INSERT INTO users (username, email, password, role_id) VALUES (?, ?, ?, ?)',
                     [username, email, hashedPassword, role_id]
                 );
+        
+                const userId = result.insertId; // Obtener el ID del usuario recién creado
+        
+                // Si el rol es `doctor`, insertar en la tabla `doctores`
+                if (role_id === 2) {
+                    await connection.execute(
+                        'INSERT INTO doctores (user_id) VALUES (?)',
+                        [userId]
+                    );
+                }
+        
+                // Confirmar la transacción
+                await connection.commit();
+            } catch (error) {
+                // Revertir cambios si algo falla
+                await connection.rollback();
+                throw error;
             } finally {
                 connection.release();
             }
         }
+        
 
     static async getAllUsers() {
         await checkConnection();

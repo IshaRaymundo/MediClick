@@ -27,5 +27,7 @@ router.post('/reset-password/:token', ForgotPasswordController.resetPassword);
 router.get('/users', UsersController.getUsers);
 router.put('/users/:id', UsersController.updateUser);
 router.delete('/users/:id', UsersController.deleteUser);
+router.post('/users/create', UsersController.createUserWithRole); // Nueva ruta para crear usuarios con roles
+
 
 module.exports = router;
