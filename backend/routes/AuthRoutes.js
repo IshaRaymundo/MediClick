@@ -4,6 +4,7 @@ const AuthController = require('../controller/Auth/AuthController');
 const UsersController = require('../controller/Cruds/Users');
 const ForgotPasswordController = require('../controller/Auth/ForgotPassword');
 const ClientController = require('../controller/Dashboard/Client');
+const EspecialidadesController = require('../controller/Cruds/Especialidades');
 
 const router = express.Router();
 
@@ -28,6 +29,13 @@ router.get('/users', UsersController.getUsers);
 router.put('/users/:id', UsersController.updateUser);
 router.delete('/users/:id', UsersController.deleteUser);
 router.post('/users/create', UsersController.createUserWithRole); // Nueva ruta para crear usuarios con roles
+
+// CRUD routes de Especialidades
+router.get('/especialidades', EspecialidadesController.getAll);
+router.get('/especialidades/:id', EspecialidadesController.getById);
+router.post('/especialidades', EspecialidadesController.create);
+router.put('/especialidades/:id', EspecialidadesController.update);
+router.delete('/especialidades/:id', EspecialidadesController.delete);
 
 
 module.exports = router;
