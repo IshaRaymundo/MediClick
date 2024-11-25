@@ -22,10 +22,8 @@ const DoctorModal = ({ isOpen, doctor, onClose }) => {
   }, [isOpen]);
 
   const handleNavigate = () => {
-    // Cierra el modal y activa la pantalla de carga.
     setShowModal(false);
 
-    // Retarda ligeramente la activación del overlay para evitar conflictos visuales.
     setTimeout(() => {
       setIsLoading(true);
 
@@ -33,8 +31,8 @@ const DoctorModal = ({ isOpen, doctor, onClose }) => {
         setIsLoading(false);
         navigate(
           `/schedule-appointment?doctor=${encodeURIComponent(
-            doctor.doctor_name
-          )}&especialidad=${encodeURIComponent(doctor.especialidad)}`
+            doctor.username
+          )}&especialidad=${encodeURIComponent(doctor.especialidades)}`
         );
       }, 2000);
     }, 300);
@@ -44,9 +42,8 @@ const DoctorModal = ({ isOpen, doctor, onClose }) => {
 
   return (
     <>
-      {isLoading && <LoadingOverlay />} {/* Muestra el overlay de carga */}
+      {isLoading && <LoadingOverlay />}
 
-      {/* Modal */}
       <div
         className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 overflow-y-auto overflow-x-hidden transition-opacity duration-300 ${
           showModal ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -61,7 +58,7 @@ const DoctorModal = ({ isOpen, doctor, onClose }) => {
           {/* Modal header */}
           <div className="p-6 border-b border-gray-300 dark:border-gray-700">
             <h3 className="text-2xl text-center font-semibold text-gray-800 dark:text-white">
-              {doctor.doctor_name}
+              {doctor.username}
             </h3>
             <button
               type="button"
@@ -89,12 +86,12 @@ const DoctorModal = ({ isOpen, doctor, onClose }) => {
           <div className="p-6 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
             <div className="flex flex-col items-center mr-6">
               <img
-                src={doctor.foto_url || "https://via.placeholder.com/150"}
-                alt={doctor.doctor_name}
+                src={doctor.fotoUrl || "https://via.placeholder.com/150"}
+                alt={doctor.username}
                 className="w-40 h-40 rounded-full shadow-md"
               />
               <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-                {doctor.especialidad || "No hay especialidad disponible."}
+                {doctor.especialidades || "No hay especialidad disponible."}
               </p>
             </div>
             <div className="flex flex-col flex-grow">
