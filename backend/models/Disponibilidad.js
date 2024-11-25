@@ -53,6 +53,22 @@ class Disponibilidad {
             connection.release();
         }
     }
+
+        // Obtener disponibilidades por doctor_id
+        static async getDisponibilidadesByDoctorIdAndDiaSemana(doctorId, diaSemana) {
+            await checkConnection();
+            const connection = await pool.getConnection();
+            try {
+                const [result] = await connection.execute(
+                    'SELECT * FROM disponibilidades WHERE doctor_id = ? AND dia_semana = ? AND activo = 1',
+                    [doctorId, diaSemana]
+                );
+                return result;
+            } finally {
+                connection.release();
+            }
+        }
+    
 }
 
 module.exports = Disponibilidad;

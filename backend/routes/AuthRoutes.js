@@ -6,7 +6,8 @@ const ForgotPasswordController = require('../controller/Auth/ForgotPassword');
 const ClientController = require('../controller/Dashboard/Client');
 const EspecialidadesController = require('../controller/Cruds/Especialidades');
 const DoctorController = require('../controller/Cruds/Doctor');
-const DisponibilidadController = require('../controller/Dashboard/HorariosDoctor')
+const DisponibilidadController = require('../controller/Dashboard/HorariosDoctor');
+const HorarioController = require('../controller/Dashboard/HorarioController');
 const router = express.Router();
 
 // Rutas para doctores y especialidades
@@ -50,6 +51,11 @@ router.post('/disponibilidades', DisponibilidadController.createDisponibilidad);
 router.get('/disponibilidades/:doctorId', DisponibilidadController.getDisponibilidades);// Obtener todas las disponibilidades de un doctor
 router.delete('/disponibilidades/:id', DisponibilidadController.deleteDisponibilidad);// Eliminar una disponibilidad específica
 router.put('/disponibilidades/:id', DisponibilidadController.updateDisponibilidad);// Actualizar una disponibilidad existente
+
+
+router.get('/horarios/disponibles', HorarioController.getHorariosDisponibles);// Obtener horarios disponibles
+router.post('/horarios/reservar', HorarioController.reservarHorario); // Reservar un horario
+router.delete('/horarios/cancelar', HorarioController.cancelarReserva); // Cancelar una reserva
 
 
 module.exports = router;
