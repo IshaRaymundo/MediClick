@@ -5,7 +5,7 @@ const UsersController = require('../controller/Cruds/Users');
 const ForgotPasswordController = require('../controller/Auth/ForgotPassword');
 const ClientController = require('../controller/Dashboard/Client');
 const EspecialidadesController = require('../controller/Cruds/Especialidades');
-
+const DoctorController = require('../controller/Cruds/Doctor');
 const router = express.Router();
 
 // Rutas para doctores y especialidades
@@ -36,6 +36,13 @@ router.get('/especialidades/:id', EspecialidadesController.getById);
 router.post('/especialidades', EspecialidadesController.create);
 router.put('/especialidades/:id', EspecialidadesController.update);
 router.delete('/especialidades/:id', EspecialidadesController.delete);
+
+// CRUD para doctores
+router.get('/doctores/:userId', DoctorController.getDoctor); // Obtener información del doctor y sus especialidades
+router.post('/doctores/:userId/especialidades', DoctorController.addEspecialidad); // Añadir especialidad
+router.delete('/doctores/:userId/especialidades', DoctorController.removeEspecialidad); // Eliminar especialidad
+router.put('/doctores/:userId', DoctorController.updateDoctor); // Actualizar foto e información
+router.delete('/doctores/:userId', DoctorController.deleteDoctor);// Eliminar doctor
 
 
 module.exports = router;
