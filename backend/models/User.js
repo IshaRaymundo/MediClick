@@ -113,6 +113,10 @@ static async findById(id) {
         await checkConnection();
         const connection = await pool.getConnection();
         try {
+            // Iniciar una transacción
+            await connection.beginTransaction();
+
+            // Actualizar usuario
             if (password) {
                 const hashedPassword = await bcrypt.hash(password, 10);
                 await connection.execute(
@@ -125,6 +129,30 @@ static async findById(id) {
                     [username, email, role_id, id]
                 );
             }
+
+            // Verificar si el nuevo rol es "doctor"
+            if (role_id === 2) {
+                // Comprobar si el usuario ya está en la tabla `doctores`
+                const [doctorExists] = await connection.execute(
+                    'SELECT * FROM doctores WHERE user_id = ?',
+                    [id]
+                );
+
+                if (doctorExists.length === 0) {
+                    // Insertar el usuario en la tabla `doctores` si no existe
+                    await connection.execute(
+                        'INSERT INTO doctores (user_id) VALUES (?)',
+                        [id]
+                    );
+                }
+            }
+
+            // Confirmar transacción
+            await connection.commit();
+        } catch (error) {
+            // Revertir cambios si algo falla
+            await connection.rollback();
+            throw error;
         } finally {
             connection.release();
         }
