@@ -11,7 +11,7 @@ const truncateText = (text, maxLength) => {
   if (text && text.length > maxLength) {
     return text.substring(0, maxLength) + '...';
   }
-  return text || '';  // Si `text` es null o undefined, devuelve una cadena vacía
+  return text || ''; 
 };
 
 
