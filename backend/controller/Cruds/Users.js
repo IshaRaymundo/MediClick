@@ -65,10 +65,11 @@ class UsersController {
             await User.deleteUser(id);
             res.status(200).json({ message: 'Usuario eliminado correctamente' });
         } catch (error) {
-            console.error('Error al eliminar usuario:', error);
-            res.status(500).json({ message: 'Error en el servidor' });
+            console.error('Error al eliminar usuario:', error.message);
+            res.status(500).json({ message: 'Error al eliminar usuario' });
         }
     }
+    
 }
 
 module.exports = UsersController;

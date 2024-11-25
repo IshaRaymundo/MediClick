@@ -177,11 +177,45 @@ static async findById(id) {
         await checkConnection();
         const connection = await pool.getConnection();
         try {
+            // Iniciar una transacción para garantizar consistencia
+            await connection.beginTransaction();
+    
+            // Verificar si el usuario es un doctor
+            const [doctor] = await connection.execute(
+                'SELECT id FROM doctores WHERE user_id = ?',
+                [id]
+            );
+    
+            if (doctor.length > 0) {
+                const doctorId = doctor[0].id;
+    
+                // Eliminar especialidades asociadas al doctor
+                await connection.execute(
+                    'DELETE FROM doctor_especialidad WHERE doctor_id = ?',
+                    [doctorId]
+                );
+    
+                // Eliminar el registro del doctor
+                await connection.execute(
+                    'DELETE FROM doctores WHERE id = ?',
+                    [doctorId]
+                );
+            }
+    
+            // Eliminar el usuario
             await connection.execute('DELETE FROM users WHERE id = ?', [id]);
+    
+            // Confirmar la transacción
+            await connection.commit();
+        } catch (error) {
+            // Revertir cambios si algo falla
+            await connection.rollback();
+            throw error;
         } finally {
             connection.release();
         }
     }
+    
 }
 
 module.exports = User;
