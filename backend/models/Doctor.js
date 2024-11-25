@@ -2,6 +2,30 @@ const { pool, checkConnection } = require('../db/conexion');
 
 class Doctor {
 
+    static async getAllDoctorsWithEspecialidades() {
+        await checkConnection();
+        const connection = await pool.getConnection();
+        try {
+            const [result] = await connection.execute(`
+                SELECT 
+                    d.id AS doctorId,
+                    u.username,
+                    u.email,
+                    d.foto_url AS fotoUrl,
+                    d.informacion,
+                    GROUP_CONCAT(e.nombre) AS especialidades
+                FROM doctores d
+                INNER JOIN users u ON d.user_id = u.id
+                LEFT JOIN doctor_especialidad de ON d.id = de.doctor_id
+                LEFT JOIN especialidades e ON de.especialidad_id = e.id
+                GROUP BY d.id, u.username, u.email, d.foto_url, d.informacion
+            `);
+            return result;
+        } finally {
+            connection.release();
+        }
+    }
+
     static async removeEspecialidades(doctorId) {
         await checkConnection();
         const connection = await pool.getConnection();

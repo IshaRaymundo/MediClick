@@ -45,14 +45,16 @@ router.post('/doctores/:userId/especialidades', DoctorController.addEspecialidad
 router.delete('/doctores/:userId/especialidades', DoctorController.removeEspecialidad); // Eliminar especialidad
 router.put('/doctores/:userId', DoctorController.updateDoctor); // Actualizar foto e información
 router.delete('/doctores/:userId', DoctorController.deleteDoctor);// Eliminar doctor
+router.get('/doctores', DoctorController.getAllDoctors);
 
 
+//crud de disponibilidades
 router.post('/disponibilidades', DisponibilidadController.createDisponibilidad);// Crear una nueva disponibilidad
 router.get('/disponibilidades/:doctorId', DisponibilidadController.getDisponibilidades);// Obtener todas las disponibilidades de un doctor
 router.delete('/disponibilidades/:id', DisponibilidadController.deleteDisponibilidad);// Eliminar una disponibilidad específica
 router.put('/disponibilidades/:id', DisponibilidadController.updateDisponibilidad);// Actualizar una disponibilidad existente
 
-
+//muestra, reserva y cancelacion de horarios
 router.get('/horarios/disponibles', HorarioController.getHorariosDisponibles);// Obtener horarios disponibles
 router.post('/horarios/reservar', HorarioController.reservarHorario); // Reservar un horario
 router.delete('/horarios/cancelar', HorarioController.cancelarReserva); // Cancelar una reserva

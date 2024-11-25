@@ -2,6 +2,16 @@ const Doctor = require('../../models/Doctor');
 
 class DoctorController {
 
+    static async getAllDoctors(req, res) {
+        try {
+            const doctors = await Doctor.getAllDoctorsWithEspecialidades();
+            res.status(200).json(doctors);
+        } catch (error) {
+            console.error('Error al obtener todos los doctores:', error.message);
+            res.status(500).json({ message: 'Error al obtener todos los doctores' });
+        }
+    }
+
     static async deleteDoctor(req, res) {
         const { userId } = req.params;
 
