@@ -12,6 +12,7 @@ import ResetPassword from './Auth/ResetPassword';
 import ScheduleAppointment from './Pages/Client/ScheduleAppointment';
 import Appointments from './Pages/Client/Appointments';
 import UserProfile from './Components/Profile';
+import DoctorProfile from './Pages/Doctor/DoctorProfile';
 
 function App() {
   const [userName, setUserName] = useState('');
@@ -142,6 +143,14 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route 
+          path="/datos-doc"
+          element={
+            <ProtectedRoute roleRequired={2}>
+              <DoctorProfile />
+            </ProtectedRoute>
+          }/>
 
           <Route
             path="/schedule-appointment"

@@ -8,18 +8,19 @@ import axios from 'axios';
 
 // Función para truncar texto
 const truncateText = (text, maxLength) => {
-  if (text.length > maxLength) {
+  if (text && text.length > maxLength) {
     return text.substring(0, maxLength) + '...';
   }
-  return text;
+  return text || '';  // Si `text` es null o undefined, devuelve una cadena vacía
 };
 
+
 // Componente para mostrar cada doctor
-const DoctorCard = ({ name, especialidad, description, price, onSchedule }) => (
+const DoctorCard = ({ name, especialidad, description, price, photo, onSchedule }) => (
   <div className="bg-white p-4 rounded-xl flex flex-col sm:flex-row items-center w-full max-w-5xl mx-auto shadow-lg hover:shadow-2xl transition-all">
     <div className="flex flex-col items-center mb-4 sm:mb-0 sm:mr-6">
       <img
-        src="https://via.placeholder.com/120"
+        src={photo || "https://via.placeholder.com/120"}
         alt="Doctor"
         className="w-24 h-24 sm:w-32 sm:h-32 rounded-full mb-2"
       />
