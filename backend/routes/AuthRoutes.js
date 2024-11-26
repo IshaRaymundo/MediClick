@@ -58,6 +58,10 @@ router.put('/disponibilidades/:id', DisponibilidadController.updateDisponibilida
 router.get('/horarios/disponibles', HorarioController.getHorariosDisponibles);// Obtener horarios disponibles
 router.post('/horarios/reservar', HorarioController.reservarHorario); // Reservar un horario
 router.delete('/horarios/cancelar', HorarioController.cancelarReserva); // Cancelar una reserva
+//citas
+router.get('/citas', HorarioController.listarCitas); // Listar todas las citas
+router.post('/citas/finalizar', HorarioController.finalizarCita); // Marcar una cita como finalizada
+
 
 
 module.exports = router;

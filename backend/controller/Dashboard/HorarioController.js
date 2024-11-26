@@ -1,5 +1,6 @@
 const Disponibilidad = require('../../models/Disponibilidad');
 const HorarioOcupado = require('../../models/HorarioOcupado');
+const Cita = require ('../../models/Cita');
 
 class HorarioController {
     // Mapear horarios disponibles
@@ -58,24 +59,34 @@ class HorarioController {
 
     // Reservar un horario
     static async reservarHorario(req, res) {
-        const { disponibilidadId, fecha, horaInicio, horaFin } = req.body;
-
-        if (!disponibilidadId || !fecha || !horaInicio || !horaFin) {
-            return res.status(400).json({ message: 'Todos los campos son obligatorios: disponibilidadId, fecha, horaInicio, horaFin' });
+        const { disponibilidadId, fecha, horaInicio, horaFin, doctorId, pacienteId } = req.body;
+    
+        if (!disponibilidadId || !fecha || !horaInicio || !horaFin || !doctorId || !pacienteId) {
+            return res.status(400).json({ message: 'Todos los campos son obligatorios: disponibilidadId, fecha, horaInicio, horaFin, doctorId, pacienteId' });
         }
-
+    
         try {
             // Verificar si el horario ya está ocupado
             const isOcupado = await HorarioOcupado.isHorarioOcupado(disponibilidadId, fecha, horaInicio, horaFin);
-
+    
             if (isOcupado) {
                 return res.status(409).json({ message: 'El horario ya está ocupado' });
             }
-
-            // Insertar el horario como ocupado
+    
+            // Reservar el horario
             await HorarioOcupado.reservarHorario(disponibilidadId, fecha, horaInicio, horaFin);
-
-            res.status(201).json({ message: 'Horario reservado exitosamente' });
+    
+            // Crear la cita correspondiente
+            await Cita.createCita({
+                doctorId,
+                pacienteId,
+                fecha,
+                horaInicio,
+                horaFin,
+                estadoId: 1, // Estado "Pendiente"
+            });
+    
+            res.status(201).json({ message: 'Horario reservado y cita creada exitosamente' });
         } catch (error) {
             console.error('Error al reservar horario:', error.message);
             res.status(500).json({ message: 'Error al reservar horario' });
@@ -84,22 +95,58 @@ class HorarioController {
 
     // Cancelar una reserva (opcional, si quieres permitir cancelaciones)
     static async cancelarReserva(req, res) {
-        const { disponibilidadId, fecha, horaInicio, horaFin } = req.body;
-
-        if (!disponibilidadId || !fecha || !horaInicio || !horaFin) {
-            return res.status(400).json({ message: 'Todos los campos son obligatorios: disponibilidadId, fecha, horaInicio, horaFin' });
+        const { disponibilidadId, fecha, horaInicio, horaFin, citaId } = req.body;
+    
+        if (!disponibilidadId || !fecha || !horaInicio || !horaFin || !citaId) {
+            return res.status(400).json({ message: 'Todos los campos son obligatorios: disponibilidadId, fecha, horaInicio, horaFin, citaId' });
         }
-
+    
         try {
-            // Eliminar el horario de la tabla horarios_ocupados
+            // Eliminar el horario reservado
             await HorarioOcupado.cancelarHorario(disponibilidadId, fecha, horaInicio, horaFin);
-
-            res.status(200).json({ message: 'Reserva cancelada exitosamente' });
+    
+            // Actualizar el estado de la cita a "Cancelada" (estado 2)
+            await Cita.updateEstadoCita(citaId, 2);
+    
+            res.status(200).json({ message: 'Reserva cancelada y estado de la cita actualizado a Cancelada' });
         } catch (error) {
             console.error('Error al cancelar reserva:', error.message);
             res.status(500).json({ message: 'Error al cancelar reserva' });
         }
     }
+
+    static async listarCitas(req, res) {
+        try {
+            // Obtener todas las citas desde el modelo
+            const citas = await Cita.getAllCitas();
+    
+            res.status(200).json(citas);
+        } catch (error) {
+            console.error('Error al obtener citas:', error.message);
+            res.status(500).json({ message: 'Error al obtener citas' });
+        }
+    }
+
+    static async finalizarCita(req, res) {
+        const { citaId } = req.body;
+    
+        if (!citaId) {
+            return res.status(400).json({ message: 'El campo citaId es obligatorio' });
+        }
+    
+        try {
+            // Actualizar el estado de la cita a "Finalizada" (estado 3)
+            await Cita.updateEstadoCita(citaId, 3);
+    
+            res.status(200).json({ message: 'Cita marcada como Finalizada' });
+        } catch (error) {
+            console.error('Error al finalizar cita:', error.message);
+            res.status(500).json({ message: 'Error al finalizar cita' });
+        }
+    }
+    
+    
+    
 }
 
 module.exports = HorarioController;
