@@ -17,37 +17,37 @@ class Cita {
 
  // Obtener todas las citas con el nombre del paciente
 // Obtener todas las citas con los nombres del doctor y del paciente
-static async getAllCitas(doctorId) {
+static async getAllCitas() {
     await checkConnection();
     const connection = await pool.getConnection();
     try {
-        // Consulta para obtener citas con el nombre del doctor y sus especialidades
+        // Consulta para incluir el nombre del doctor y sus especialidades
         const [result] = await connection.execute(`
             SELECT 
                 citas.id,
+                citas.doctor_id,
+                citas.user_id,
                 citas.fecha,
                 citas.hora_inicio,
                 citas.hora_fin,
                 citas.estado_id,
-                pacientes.username AS paciente_nombre,
                 doctores.id AS doctor_id,
                 usuarios.username AS doctor_nombre,
                 GROUP_CONCAT(especialidades.nombre SEPARATOR ', ') AS especialidades
             FROM citas
-            JOIN users AS pacientes ON citas.user_id = pacientes.id
             JOIN doctores ON citas.doctor_id = doctores.id
             JOIN users AS usuarios ON doctores.user_id = usuarios.id
             LEFT JOIN doctor_especialidad ON doctores.id = doctor_especialidad.doctor_id
             LEFT JOIN especialidades ON doctor_especialidad.especialidad_id = especialidades.id
-            WHERE citas.doctor_id = ?
             GROUP BY citas.id
-        `, [doctorId]); // Filtramos por el doctor actual
+        `);
 
         return result;
     } finally {
         connection.release();
     }
 }
+
 
 
 
