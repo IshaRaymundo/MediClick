@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react"; 
 import { useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -44,6 +44,7 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
         const response = await fetch(`http://localhost:3000/citas?user_id=${userName}`);
         if (response.ok) {
           const data = await response.json();
+          console.log("Citas obtenidas del backend:", data);
           setAppointments(data);
         } else {
           throw new Error("Error al obtener las citas");
@@ -70,6 +71,26 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
   };
 
   const handleCancel = async (appointment) => {
+    console.log("Cita seleccionada para cancelar:", appointment);
+  
+    // Validar datos necesarios
+    if (
+      !appointment.disponibilidad_id ||
+      !appointment.citaId ||
+      !appointment.fecha ||
+      !appointment.hora_inicio ||
+      !appointment.hora_fin
+    ) {
+      console.error("Datos incompletos para cancelar la cita:", appointment);
+      MySwal.fire({
+        title: "Error",
+        text: "No se encontraron datos suficientes para cancelar la cita.",
+        icon: "error",
+      });
+      return;
+    }
+  
+    // Confirmación del usuario
     MySwal.fire({
       title: "¿Estás seguro de querer cancelar esta cita?",
       text: `Cita con ${appointment.doctor_nombre} (${appointment.especialidades}) el ${formatDate(
@@ -83,14 +104,29 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
       cancelButtonText: "No",
     }).then(async (result) => {
       if (result.isConfirmed) {
+        // Construir el cuerpo de la solicitud
+        const requestBody = {
+          disponibilidadId: appointment.disponibilidad_id,
+          fecha: new Date(appointment.fecha).toISOString().split("T")[0], // Asegura formato YYYY-MM-DD
+          horaInicio: appointment.hora_inicio, // Formato HH:MM:SS
+          horaFin: appointment.hora_fin,       // Formato HH:MM:SS
+          citaId: appointment.citaId,
+        };
+  
+        console.log("Datos enviados al backend para cancelar la cita:", requestBody);
+  
         try {
           const response = await fetch("http://localhost:3000/horarios/cancelar", {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ citaId: appointment.id }),
+            body: JSON.stringify(requestBody),
           });
-
+  
           if (response.ok) {
+            // Actualizar la lista de citas
+            setAppointments((prev) =>
+              prev.filter((item) => item.citaId !== appointment.citaId)
+            );
             MySwal.fire({
               title: "¡Cita cancelada!",
               text: "La cita ha sido cancelada exitosamente.",
@@ -98,11 +134,10 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
               timer: 2000,
               showConfirmButton: false,
             });
-            setAppointments((prev) =>
-              prev.filter((item) => item.id !== appointment.id)
-            );
           } else {
-            throw new Error("No se pudo cancelar la cita.");
+            const errorData = await response.json();
+            console.error("Error del backend al cancelar la cita:", errorData);
+            throw new Error(errorData.message || "No se pudo cancelar la cita.");
           }
         } catch (error) {
           console.error("Error al cancelar la cita:", error);
@@ -115,6 +150,7 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
       }
     });
   };
+  
 
   const renderAppointments = () => {
     if (loading) {
@@ -217,35 +253,29 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
                 </button>
               </div>
             </div>
-            <div className="border-t border-gray-300"></div>
-            <div className="transition-opacity duration-500 ease-in-out opacity-100">
-              {view === "past" ? (
-                <h2 className="text-xl font-bold mb-6 text-blue-700 text-center md:text-left">
-                  Citas Pasadas
-                </h2>
-              ) : (
-                <h2 className="text-xl font-bold mb-6 text-blue-700 text-center md:text-left">
-                  Citas Próximas
-                </h2>
-              )}
-              {renderAppointments()}
-            </div>
 
-            <div className="flex justify-center mt-6 space-x-4">
-              {Array.from({ length: totalPages }, (_, index) => (
-                <button
-                  key={index + 1}
-                  onClick={() => handlePageChange(index + 1)}
-                  className={`px-3 py-2 rounded-md ${
-                    index + 1 === currentPage
-                      ? "bg-blue-700 text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                >
-                  {index + 1}
-                </button>
-              ))}
-            </div>
+            {renderAppointments()}
+
+            {appointments.length > itemsPerPage && (
+              <div className="flex justify-center space-x-4 mt-6">
+                {currentPage > 1 && (
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all"
+                  >
+                    Anterior 
+                  </button>
+                )}
+                {currentPage < totalPages && (
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all"
+                  >
+                    Siguiente
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
