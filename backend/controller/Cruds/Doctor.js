@@ -100,10 +100,18 @@ class DoctorController {
 
     static async updateDoctor(req, res) {
         const { userId } = req.params;
-        const { fotoUrl, informacion } = req.body;
-
+        const informacion = req.body.informacion || null;
+        const fotoUrl = req.file ? req.file.path : null; // Si se sube un archivo, usa su ruta
+    
         try {
-            await Doctor.updateDoctorInfo(userId, fotoUrl || null, informacion || null);
+            // Validar que al menos un campo sea proporcionado
+            if (!fotoUrl && !informacion) {
+                throw new Error('No se proporcionaron campos para actualizar');
+            }
+    
+            // Actualizar información del doctor
+            await Doctor.updateDoctorInfo(userId, fotoUrl, informacion);
+    
             res.status(200).json({ message: 'Información del doctor actualizada correctamente' });
         } catch (error) {
             console.error('Error al actualizar doctor:', error.message);
@@ -114,6 +122,7 @@ class DoctorController {
             }
         }
     }
+    
 }
 
 module.exports = DoctorController;

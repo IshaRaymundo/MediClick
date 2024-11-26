@@ -11,19 +11,59 @@ const UserProfile = ({ userName, userEmail, userRole, handleLogout }) => {
     username: userName || "Cargando...",
     email: userEmail || "Cargando...",
     password: "",
+    fotoUrl: null,
+    informacion: "",
   });
 
-  const userId = localStorage.getItem("userId"); // Asegúrate de guardar el `id` en localStorage.
+  const userId = localStorage.getItem("userId");
 
   useEffect(() => {
-    console.log("userId from localStorage:", userId);
-    setFormData({
-      username: userName || "Cargando...",
-      email: userEmail || "Cargando...",
-      password: "",
-    });
-}, [userName, userEmail, userId]);
+    const fetchUserData = async () => {
+      try {
+        // Obtener todos los usuarios y doctores
+        const [usersResponse, doctorsResponse] = await Promise.all([
+          axios.get("http://localhost:3000/users"),
+          axios.get("http://localhost:3000/doctores"),
+        ]);
 
+        // Encontrar datos del usuario
+        const user = usersResponse.data.find((u) => u.id === parseInt(userId));
+        if (!user) {
+          throw new Error("Usuario no encontrado");
+        }
+
+        // Si es doctor, obtener información adicional
+        let doctorData = {};
+        if (userRole === 2) {
+          const doctor = doctorsResponse.data.find(
+            (d) => d.username === user.username
+          );
+          if (doctor) {
+            doctorData = {
+              fotoUrl: doctor.fotoUrl || null,
+              informacion: doctor.informacion || "",
+            };
+          }
+        }
+
+        setFormData({
+          username: user.username || "Cargando...",
+          email: user.email || "Cargando...",
+          password: "",
+          ...doctorData,
+        });
+      } catch (error) {
+        console.error("Error al obtener datos del usuario:", error);
+        Swal.fire(
+          "Error",
+          "No se pudieron cargar los datos del perfil.",
+          "error"
+        );
+      }
+    };
+
+    fetchUserData();
+  }, [userId, userRole]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -31,6 +71,21 @@ const UserProfile = ({ userName, userEmail, userRole, handleLogout }) => {
       ...formData,
       [name]: value,
     });
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({
+        ...formData,
+        fotoUrl: file,
+      });
+      const reader = new FileReader();
+      reader.onload = () => {
+        document.getElementById("imagePreview").src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleEditClick = () => {
@@ -46,48 +101,73 @@ const UserProfile = ({ userName, userEmail, userRole, handleLogout }) => {
     }).then((result) => {
       if (result.isConfirmed) {
         setIsEditing(true);
-        Swal.fire("Edición habilitada", "Ahora puedes modificar tus datos.", "success");
+        Swal.fire(
+          "Edición habilitada",
+          "Ahora puedes modificar tus datos.",
+          "success"
+        );
       }
     });
   };
 
   const handleSaveClick = async () => {
     Swal.fire({
-        title: "¿Guardar cambios?",
-        text: "Se actualizarán tus datos en el sistema.",
-        icon: "question",
-        showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Guardar",
-        cancelButtonText: "Cancelar",
+      title: "¿Guardar cambios?",
+      text: "Se actualizarán tus datos en el sistema.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Guardar",
+      cancelButtonText: "Cancelar",
     }).then(async (result) => {
-        if (result.isConfirmed) {
-            try {
-                const payload = {};
-                if (formData.username && formData.username !== "Cargando...") {
-                    payload.username = formData.username;
-                }
-                if (formData.email && formData.email !== "Cargando...") {
-                    payload.email = formData.email;
-                }
-                if (formData.password) {
-                    payload.password = formData.password;
-                }
+      if (result.isConfirmed) {
+        try {
+          // Actualizar datos del usuario
+          const userPayload = {
+            username: formData.username,
+            email: formData.email,
+            role_id: userRole,
+          };
 
-                console.log('Payload enviado al backend:', payload);
+          if (formData.password) {
+            userPayload.password = formData.password;
+          }
 
-                const response = await axios.put(`http://localhost:3000/users/${userId}`, payload);
-                setIsEditing(false);
-                Swal.fire("¡Guardado!", response.data.message, "success");
-            } catch (error) {
-                console.error("Error al actualizar datos:", error);
-                Swal.fire("Error", "No se pudieron guardar los cambios.", "error");
+          await axios.put(`http://localhost:3000/users/${userId}`, userPayload);
+
+          // Si es un doctor, actualizar su foto e información
+          if (userRole === 2) {
+            const doctorPayload = new FormData();
+            if (formData.fotoUrl instanceof File) {
+              doctorPayload.append("fotoUrl", formData.fotoUrl);
+            } else {
+              doctorPayload.append("fotoUrl", ""); // Asegura que siempre se envíe este campo
             }
-        }
-    });
-};
+            doctorPayload.append("informacion", formData.informacion || "");
 
+            await axios.put(
+              `http://localhost:3000/doctores/${userId}`,
+              doctorPayload,
+              {
+                headers: { "Content-Type": "multipart/form-data" },
+              }
+            );
+          }
+
+          setIsEditing(false);
+          Swal.fire(
+            "¡Guardado!",
+            "Tus datos han sido actualizados correctamente.",
+            "success"
+          );
+        } catch (error) {
+          console.error("Error al actualizar datos:", error);
+          Swal.fire("Error", "No se pudieron guardar los cambios.", "error");
+        }
+      }
+    });
+  };
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
@@ -110,7 +190,10 @@ const UserProfile = ({ userName, userEmail, userRole, handleLogout }) => {
             </h2>
             <form>
               <div className="mb-4 flex items-center">
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 w-1/3">
+                <label
+                  htmlFor="username"
+                  className="block text-sm font-medium text-gray-700 w-1/3"
+                >
                   Nombre
                 </label>
                 <input
@@ -121,12 +204,17 @@ const UserProfile = ({ userName, userEmail, userRole, handleLogout }) => {
                   onChange={handleInputChange}
                   disabled={!isEditing}
                   className={`flex-1 p-2 border rounded-lg focus:outline-none ${
-                    isEditing ? "focus:ring-2 focus:ring-blue-500" : "bg-gray-200 cursor-not-allowed"
+                    isEditing
+                      ? "focus:ring-2 focus:ring-blue-500"
+                      : "bg-gray-200 cursor-not-allowed"
                   }`}
                 />
               </div>
               <div className="mb-4 flex items-center">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 w-1/3">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 w-1/3"
+                >
                   Correo Electrónico
                 </label>
                 <input
@@ -137,27 +225,76 @@ const UserProfile = ({ userName, userEmail, userRole, handleLogout }) => {
                   onChange={handleInputChange}
                   disabled={!isEditing}
                   className={`flex-1 p-2 border rounded-lg focus:outline-none ${
-                    isEditing ? "focus:ring-2 focus:ring-blue-500" : "bg-gray-200 cursor-not-allowed"
+                    isEditing
+                      ? "focus:ring-2 focus:ring-blue-500"
+                      : "bg-gray-200 cursor-not-allowed"
                   }`}
                 />
               </div>
-              <div className="mb-6 flex items-center">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 w-1/3">
-                  Contraseña
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  disabled={!isEditing}
-                  placeholder="********"
-                  className={`flex-1 p-2 border rounded-lg focus:outline-none ${
-                    isEditing ? "focus:ring-2 focus:ring-blue-500" : "bg-gray-200 cursor-not-allowed"
-                  }`}
-                />
-              </div>
+              {userRole === 2 && (
+                <>
+                  {/* Campo para subir imagen */}
+                  <div className="mb-4 flex items-center">
+                    <label
+                      htmlFor="fotoUrl"
+                      className="block text-sm font-medium text-gray-700 w-1/3"
+                    >
+                      Imagen de Perfil
+                    </label>
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        id="fotoUrl"
+                        name="fotoUrl"
+                        onChange={handleImageChange}
+                        disabled={!isEditing}
+                        className={`p-2 border rounded-lg focus:outline-none ${
+                          isEditing
+                            ? "focus:ring-2 focus:ring-blue-500"
+                            : "bg-gray-200 cursor-not-allowed"
+                        }`}
+                      />
+                      {/* Vista previa de la imagen */}
+                      <img
+                        id="imagePreview"
+                        alt="Vista previa"
+                        className="mt-2 w-24 h-24 rounded-full object-cover"
+                        src={
+                          formData.fotoUrl instanceof File
+                            ? ""
+                            : formData.fotoUrl
+                            ? `http://localhost:3000/${formData.fotoUrl}`
+                            : "/placeholder-image.png"
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* Campo para la descripción */}
+                  <div className="mb-4 flex items-center">
+                    <label
+                      htmlFor="informacion"
+                      className="block text-sm font-medium text-gray-700 w-1/3"
+                    >
+                      Descripción
+                    </label>
+                    <textarea
+                      id="informacion"
+                      name="informacion"
+                      value={formData.informacion}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                      className={`flex-1 p-2 border rounded-lg focus:outline-none resize-none ${
+                        isEditing
+                          ? "focus:ring-2 focus:ring-blue-500"
+                          : "bg-gray-200 cursor-not-allowed"
+                      }`}
+                      rows={4}
+                    ></textarea>
+                  </div>
+                </>
+              )}
+
               <div className="flex justify-end space-x-4">
                 {!isEditing ? (
                   <button

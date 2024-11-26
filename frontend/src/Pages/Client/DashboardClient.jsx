@@ -5,6 +5,11 @@ import Specialties from "../../Components/Specialties";
 import DoctorModal from "../../Components/DoctorModal";
 import axios from "axios";
 
+// Función para construir la URL de la imagen
+const getFullImageUrl = (photo) => {
+  return photo ? `http://localhost:3000/${photo}` : "https://via.placeholder.com/120";
+};
+
 // Función para truncar texto
 const truncateText = (text, maxLength) => {
   if (text && text.length > maxLength) {
@@ -25,7 +30,7 @@ const DoctorCard = ({
   <div className="bg-white p-4 rounded-xl flex flex-col sm:flex-row items-center w-full max-w-5xl mx-auto shadow-lg hover:shadow-2xl transition-all">
     <div className="flex flex-col items-center mb-4 sm:mb-0 sm:mr-6">
       <img
-        src={photo || "https://via.placeholder.com/120"}
+        src={getFullImageUrl(photo)}
         alt="Doctor"
         className="w-24 h-24 sm:w-32 sm:h-32 rounded-full mb-2"
       />

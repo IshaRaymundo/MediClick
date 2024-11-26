@@ -4,42 +4,67 @@ import Navbar from "../../Components/Navbar";
 import Sidebar from "../../Components/Sidebar";
 import { FaUserInjured, FaClock, FaClipboardList, FaCalendarAlt } from "react-icons/fa";
 import { Line } from "react-chartjs-2";
+import Swal from "sweetalert2";
 import "chart.js/auto";
 
 const DashboardDoc = ({ userName, userRole, handleLogout }) => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [specialty, setSpecialty] = useState(null);
+  const [doctorInfo, setDoctorInfo] = useState(null); // Información del doctor
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [alertShown, setAlertShown] = useState(false); // Controla si ya se mostró la alerta
 
   const nextAppointment = {
     time: "10:30 AM",
     patient: "Juan Pérez",
   };
 
-  // Obtener la especialidad del doctor
+  // Obtener la información y especialidad del doctor
   useEffect(() => {
-    const fetchSpecialty = async () => {
+    const fetchDoctorData = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/doctors");
+        const response = await axios.get("http://localhost:3000/doctores");
         const doctorData = response.data.find(
-          (doctor) => doctor.doctor_name.toLowerCase() === userName.toLowerCase()
+          (doctor) => doctor.username.toLowerCase() === userName.toLowerCase()
         );
 
         if (doctorData) {
-          setSpecialty(doctorData.especialidad);
+          setSpecialty(doctorData.especialidades || "No registrada");
+          setDoctorInfo(doctorData.informacion);
+
+          // Mostrar alerta si falta información, pero no redirigir automáticamente
+          if (!alertShown && !doctorData.informacion) {
+            Swal.fire({
+              title: "Información Incompleta",
+              text: "Parece que falta información en tu perfil. Por favor, complétala.",
+              icon: "warning",
+              confirmButtonText: "Ir a Perfil",
+              showCancelButton: true,
+              cancelButtonText: "Cerrar",
+              confirmButtonColor: "#3085d6",
+              cancelButtonColor: "#d33",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                window.location.href = "/perfil"; // Redirige solo si hace clic en "Ir a Perfil"
+              }
+            });
+
+            setAlertShown(true); // Evita que la alerta se muestre repetidamente
+          }
         } else {
           setSpecialty("No registrada");
+          setDoctorInfo(null);
         }
         setLoading(false);
       } catch (err) {
-        setError("Error al obtener la especialidad");
+        setError("Error al obtener la información del doctor");
         setLoading(false);
       }
     };
 
-    fetchSpecialty();
-  }, [userName]);
+    fetchDoctorData();
+  }, [userName, alertShown]);
 
   // Datos ficticios para la gráfica y próximas citas
   const chartData = {
@@ -123,7 +148,7 @@ const DashboardDoc = ({ userName, userRole, handleLogout }) => {
           </div>
 
           {/* Gráfica y próximas citas */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
             {/* Gráfica */}
             <div className="bg-white p-6 rounded-lg shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-300">
               <h2 className="text-xl font-bold text-center mb-4 text-blue-900">

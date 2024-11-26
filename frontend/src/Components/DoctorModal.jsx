@@ -2,6 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LoadingOverlay from "./LoadingOverlay"; // Asegúrate de importar correctamente este componente.
 
+const getFullImageUrl = (photo) => {
+  return photo ? `http://localhost:3000/${photo}` : "https://via.placeholder.com/150";
+};
+
 const DoctorModal = ({ isOpen, doctor, onClose }) => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
@@ -23,20 +27,23 @@ const DoctorModal = ({ isOpen, doctor, onClose }) => {
 
   const handleNavigate = () => {
     setShowModal(false);
-
+  
     setTimeout(() => {
       setIsLoading(true);
-
+  
       setTimeout(() => {
         setIsLoading(false);
         navigate(
           `/schedule-appointment?doctor=${encodeURIComponent(
             doctor.username
-          )}&especialidad=${encodeURIComponent(doctor.especialidades)}`
+          )}&especialidad=${encodeURIComponent(
+            doctor.especialidades
+          )}&photo=${encodeURIComponent(doctor.fotoUrl || "")}`
         );
       }, 2000);
     }, 300);
   };
+  
 
   if (!isOpen || !doctor) return null;
 
@@ -86,11 +93,11 @@ const DoctorModal = ({ isOpen, doctor, onClose }) => {
           <div className="p-6 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
             <div className="flex flex-col items-center mr-6">
               <img
-                src={doctor.fotoUrl || "https://via.placeholder.com/150"}
+                src={getFullImageUrl(doctor.fotoUrl)}
                 alt={doctor.username}
                 className="w-40 h-40 rounded-full shadow-md"
               />
-              <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+              <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400 mt-4">
                 {doctor.especialidades || "No hay especialidad disponible."}
               </p>
             </div>
