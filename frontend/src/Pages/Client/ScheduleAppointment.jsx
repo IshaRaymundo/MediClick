@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../../Components/Navbar";
 import Sidebar from "../../Components/Sidebar";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
 const getFullImageUrl = (photo) => {
@@ -14,8 +14,10 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [availableTimes, setAvailableTimes] = useState([]);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [timeToReserve, setTimeToReserve] = useState(null); // Guardar el horario seleccionado
 
   const location = useLocation();
+  const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
   const doctorName = queryParams.get("doctor") || "Doctor";
   const doctorEspecialidad = queryParams.get("especialidad") || "Especialidad";
@@ -27,7 +29,6 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
     year: "numeric",
   });
 
-  // Llama al backend para obtener los horarios disponibles
   useEffect(() => {
     const fetchAvailableTimes = async () => {
       const formattedDate = selectedDate.toISOString().split("T")[0];
@@ -63,7 +64,7 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
     setIsSidebarExpanded(!isSidebarExpanded);
   };
 
-  const handleReserve = async (timeSlot) => {
+  const confirmReservation = async (timeSlot) => {
     const { horaInicio, horaFin } = timeSlot;
     const formattedDate = selectedDate.toISOString().split("T")[0];
 
@@ -92,16 +93,19 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
         icon: "success",
         title: "¡Cita reservada!",
         text: data.message,
-        confirmButtonText: "OK",
+        showConfirmButton: false, // Elimina el botón
+        timer: 2000, // Duración de 2 segundos
       }).then(() => {
-        setAvailableTimes((prev) =>
-          prev.map((slot) =>
-            slot.horaInicio === horaInicio && slot.horaFin === horaFin
-              ? { ...slot, ocupado: true }
-              : slot
-          )
-        );
+        navigate("/"); // Redirige al home tras el tiempo definido
       });
+
+      setAvailableTimes((prev) =>
+        prev.map((slot) =>
+          slot.horaInicio === horaInicio && slot.horaFin === horaFin
+            ? { ...slot, ocupado: true }
+            : slot
+        )
+      );
     } catch (error) {
       console.error("Error al reservar cita:", error);
       Swal.fire({
@@ -110,6 +114,22 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
         text: "No se pudo reservar la cita. Inténtalo nuevamente.",
       });
     }
+  };
+
+  const handleReserve = (timeSlot) => {
+    setTimeToReserve(timeSlot); // Guarda el horario seleccionado para confirmación
+    Swal.fire({
+      title: "Confirmar reserva",
+      text: `¿Estás seguro de reservar este horario? ${timeSlot.horaInicio} - ${timeSlot.horaFin}`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Sí, reservar",
+      cancelButtonText: "Cancelar",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        confirmReservation(timeSlot); // Realiza la reserva si se confirma
+      }
+    });
   };
 
   const getDaysInMonthWithOffset = (year, month) => {
@@ -161,9 +181,7 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
             </div>
           </div>
 
-          {/* Main Content */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
-            {/* Calendar Section */}
             <div className="bg-white p-6 rounded-xl shadow-xl">
               <h3 className="text-3xl font-semibold text-gray-800 mb-4">
                 Elige el día
@@ -228,7 +246,6 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
               </div>
             </div>
 
-            {/* Time Picker Section */}
             <div className="bg-white p-6 rounded-lg shadow-xl">
               <h3 className="text-3xl font-semibold text-gray-800 mb-4">
                 Elige el horario
