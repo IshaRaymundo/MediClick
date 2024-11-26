@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -14,142 +14,137 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
-  const pastAppointments = [
-    { id: 1, date: "2024-11-01", time: "10:00 AM", doctor: "Dr. José Pérez", specialty: "Cardiología" },
-    { id: 2, date: "2024-10-25", time: "2:30 PM", doctor: "Dra. María López", specialty: "Odontología" },
-    { id: 3, date: "2024-10-10", time: "11:15 AM", doctor: "Dr. Hugo Sánchez", specialty: "Neurología" },
-    { id: 4, date: "2024-09-30", time: "4:45 PM", doctor: "Dra. Andrea Torres", specialty: "Pediatría" },
-    { id: 5, date: "2024-09-15", time: "1:00 PM", doctor: "Dr. Ernesto Chávez", specialty: "Nutriología" },
-  ];
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const upcomingAppointments = [
-    { id: 1, date: "2024-12-01", time: "9:00 AM", doctor: "Dr. Ricardo Méndez", specialty: "Neurología" },
-    { id: 2, date: "2024-12-10", time: "1:30 PM", doctor: "Dra. Ana Ramírez", specialty: "Pediatría" },
-    { id: 3, date: "2024-12-20", time: "10:00 AM", doctor: "Dr. Sofía Delgado", specialty: "Cardiología" },
-    { id: 4, date: "2025-01-05", time: "2:00 PM", doctor: "Dra. Laura Ortiz", specialty: "Odontología" },
-    { id: 5, date: "2025-01-15", time: "3:15 PM", doctor: "Dr. Carlos Rivera", specialty: "Ortopedia" },
-  ];
+  // Función para formatear la fecha en DD/MM/YYYY
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  // Función para formatear la hora en formato 12 horas (HH:MM AM/PM)
+  const formatTime = (timeString) => {
+    const date = new Date(`1970-01-01T${timeString}`);
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12; // Convertir 0 a 12 para formato 12 horas
+    return `${hours}:${minutes} ${ampm}`;
+  };
+
+  // Cargar citas desde el backend
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`http://localhost:3000/citas?user_id=${userName}`);
+        if (response.ok) {
+          const data = await response.json();
+          setAppointments(data);
+        } else {
+          throw new Error("Error al obtener las citas");
+        }
+      } catch (error) {
+        console.error("Error al cargar las citas:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAppointments();
+  }, [userName]);
+
+  const totalPages = Math.ceil(appointments.length / itemsPerPage);
 
   const getPaginatedAppointments = () => {
-    const appointments = view === "past" ? pastAppointments : upcomingAppointments;
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return appointments.slice(startIndex, endIndex);
   };
 
-  const totalPages = Math.ceil(
-    (view === "past" ? pastAppointments : upcomingAppointments).length / itemsPerPage
-  );
-
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
-  const handleAction = (action, appointment) => {
+  const handleCancel = async (appointment) => {
     MySwal.fire({
-      title: `¿Estás seguro de querer ${action}?`,
-      text: `Cita con ${appointment.doctor} (${appointment.specialty}) el ${appointment.date} a las ${appointment.time}`,
+      title: "¿Estás seguro de querer cancelar esta cita?",
+      text: `Cita con ${appointment.doctor_nombre} (${appointment.especialidades}) el ${formatDate(
+        appointment.fecha
+      )} a las ${formatTime(appointment.hora_inicio)}`,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sí, cancelar",
       cancelButtonText: "No",
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        Swal.fire({
-          title: "¡Acción exitosa!",
-          text: `La cita ha sido ${action} correctamente.`,
-          icon: "success",
-          timer: 2000,
-          showConfirmButton: false,
-        });
-      }
-    });
-  };
+        try {
+          const response = await fetch("http://localhost:3000/horarios/cancelar", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ citaId: appointment.id }),
+          });
 
-  const handleReschedule = (appointment) => {
-    MySwal.fire({
-      title: `Reagendar cita con ${appointment.doctor}`,
-      html: `
-        <div class="flex flex-col items-start">
-          <label class="block text-left font-medium mb-2">Seleccione nueva fecha:</label>
-          <input type="date" id="newDate" class="swal2-input" required>
-          <label class="block text-left font-medium mt-4 mb-2">Seleccione nuevo horario:</label>
-          <select id="newTime" class="swal2-input">
-            <option value="9:00 AM">9:00 AM</option>
-            <option value="10:00 AM">10:00 AM</option>
-            <option value="11:30 AM">11:30 AM</option>
-            <option value="1:00 PM">1:00 PM</option>
-            <option value="3:30 PM">3:30 PM</option>
-          </select>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: "Guardar",
-      cancelButtonText: "Cancelar",
-      preConfirm: () => {
-        const newDate = document.getElementById("newDate").value;
-        const newTime = document.getElementById("newTime").value;
-
-        if (!newDate || !newTime) {
-          Swal.showValidationMessage("Por favor seleccione fecha y horario");
-        } else {
-          return { newDate, newTime };
+          if (response.ok) {
+            MySwal.fire({
+              title: "¡Cita cancelada!",
+              text: "La cita ha sido cancelada exitosamente.",
+              icon: "success",
+              timer: 2000,
+              showConfirmButton: false,
+            });
+            setAppointments((prev) =>
+              prev.filter((item) => item.id !== appointment.id)
+            );
+          } else {
+            throw new Error("No se pudo cancelar la cita.");
+          }
+        } catch (error) {
+          console.error("Error al cancelar la cita:", error);
+          MySwal.fire({
+            title: "Error",
+            text: "No se pudo cancelar la cita. Intenta de nuevo más tarde.",
+            icon: "error",
+          });
         }
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        Swal.fire({
-          title: "¡Cita reagendada!",
-          text: `Nueva cita el ${result.value.newDate} a las ${result.value.newTime}`,
-          icon: "success",
-          timer: 2000,
-          showConfirmButton: false,
-        });
       }
     });
   };
 
   const renderAppointments = () => {
-    const appointments = getPaginatedAppointments();
-    return appointments.map((appointment) => (
+    if (loading) {
+      return <p>Cargando citas...</p>;
+    }
+
+    const paginatedAppointments = getPaginatedAppointments();
+    return paginatedAppointments.map((appointment) => (
       <div
         key={appointment.id}
         className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center border-b border-gray-300 py-6"
       >
         <div>
-          <p className="font-medium text-lg text-blue-900">{appointment.doctor}</p>
-          <p className="text-sm text-gray-500">{appointment.specialty}</p>
+          <p className="font-medium text-lg text-blue-900">{appointment.doctor_nombre}</p>
+          <p className="text-sm text-gray-500">{appointment.especialidades}</p>
         </div>
         <div className="text-center">
-          <p className="font-semibold text-lg">{appointment.date}</p>
-          <p className="text-sm text-gray-500">{appointment.time}</p>
+          <p className="font-semibold text-lg">{formatDate(appointment.fecha)}</p>
+          <p className="text-sm text-gray-500">{`${formatTime(
+            appointment.hora_inicio
+          )} - ${formatTime(appointment.hora_fin)}`}</p>
         </div>
         <div className="flex justify-center md:justify-end space-x-4">
-          {view === "past" && (
-            <button
-              className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition-all"
-              onClick={() => handleAction("volver a agendar", appointment)}
-            >
-              Volver agendar
-            </button>
-          )}
           {view === "upcoming" && (
-            <>
-              <button
-                className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition-all"
-                onClick={() => handleReschedule(appointment)}
-              >
-                Reagendar
-              </button>
-              <button
-                className="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700 transition-all"
-                onClick={() => handleAction("cancelar", appointment)}
-              >
-                Cancelar
-              </button>
-            </>
+            <button
+              className="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700 transition-all"
+              onClick={() => handleCancel(appointment)}
+            >
+              Cancelar
+            </button>
           )}
         </div>
       </div>
@@ -181,7 +176,7 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
             <p className="text-2xl font-semibold text-blue-900 mb-8 text-center">
               Agenda de {userName}
             </p>
-            <div class="border-t border-gray-300 my-2"></div>
+            <div className="border-t border-gray-300 my-2"></div>
             <div className="flex justify-center mb-8">
               <div
                 className="flex items-center bg-gray-200 rounded-full p-1 w-96 relative overflow-hidden"
@@ -222,7 +217,7 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
                 </button>
               </div>
             </div>
-            <div class="border-t border-gray-300"></div>
+            <div className="border-t border-gray-300"></div>
             <div className="transition-opacity duration-500 ease-in-out opacity-100">
               {view === "past" ? (
                 <h2 className="text-xl font-bold mb-6 text-blue-700 text-center md:text-left">
@@ -241,10 +236,10 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
                 <button
                   key={index + 1}
                   onClick={() => handlePageChange(index + 1)}
-                  className={`w-10 h-10 flex items-center justify-center rounded-full border transition-all ${
-                    currentPage === index + 1
-                      ? "bg-purple-500 text-white border-purple-500"
-                      : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                  className={`px-3 py-2 rounded-md ${
+                    index + 1 === currentPage
+                      ? "bg-blue-700 text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
                 >
                   {index + 1}
