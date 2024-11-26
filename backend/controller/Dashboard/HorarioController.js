@@ -116,16 +116,18 @@ class HorarioController {
     }
 
     static async listarCitas(req, res) {
-        try {
-            // Obtener todas las citas desde el modelo
-            const citas = await Cita.getAllCitas();
+        const doctorId = req.user.id; //doctor logueado tiene su id en req.user.id
     
+        try {
+            // Obtener todas las citas para el doctor logueado
+            const citas = await Cita.getAllCitas(doctorId);
             res.status(200).json(citas);
         } catch (error) {
             console.error('Error al obtener citas:', error.message);
             res.status(500).json({ message: 'Error al obtener citas' });
         }
     }
+    
 
     static async finalizarCita(req, res) {
         const { citaId } = req.body;

@@ -14,6 +14,7 @@ import Appointments from './Pages/Client/Appointments';
 import UserProfile from './Components/Profile';
 import EspecialidadesManagement from './Pages/Admin/Speciality';
 import Schedule from './Pages/Doctor/Schedule';
+import AppointmentsDoc from './Pages/Doctor/AppointmentsDoc';
 
 function App() {
   const [userName, setUserName] = useState('');
@@ -158,6 +159,22 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+<Route
+            path="/mis-pacientes"
+            element={
+              <ProtectedRoute roleRequired={2}>
+                <AppointmentsDoc
+                  userName={userName}
+                  userRole={userRole}
+                  setUserName={setUserName}
+                  setUserRole={setUserRole}
+                  handleLogout={handleLogout}
+                />
+              </ProtectedRoute>
+            }
+          />
+
 
           <Route
             path="/Schedule-doc"
