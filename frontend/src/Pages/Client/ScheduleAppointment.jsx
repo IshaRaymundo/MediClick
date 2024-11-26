@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; 
 import Navbar from "../../Components/Navbar";
 import Sidebar from "../../Components/Sidebar";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
-// Función para construir la URL completa de la imagen
 const getFullImageUrl = (photo) => {
   return photo ? `http://localhost:3000/${photo}` : "https://via.placeholder.com/150";
 };
@@ -12,14 +11,17 @@ const getFullImageUrl = (photo) => {
 const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState(null);
+  const [availableTimes, setAvailableTimes] = useState([]); // Estado para los horarios disponibles
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
+  const doctorId = 2; // Supongamos que este es fijo para este ejemplo
+  const pacienteId = 4; // Este debe provenir del estado del usuario autenticado
   const doctorName = queryParams.get("doctor") || "Doctor";
   const doctorEspecialidad = queryParams.get("especialidad") || "Especialidad";
-  const doctorPhoto = queryParams.get("photo") || ""; // Capturar la foto desde la URL
+  const doctorPhoto = queryParams.get("photo") || "";
 
   const daysOfWeek = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
   const currentMonth = selectedDate.toLocaleDateString("es-ES", {
@@ -37,6 +39,34 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
     return days;
   };
 
+  // Llamada al backend para obtener horarios disponibles
+  useEffect(() => {
+    const fetchAvailableTimes = async () => {
+      const formattedDate = selectedDate.toISOString().split("T")[0]; // Formato YYYY-MM-DD
+      try {
+        const response = await fetch(
+          `http://localhost:3000/horarios/disponibles?doctorId=${doctorId}&fecha=${formattedDate}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Error en la respuesta del servidor");
+        }
+
+        const data = await response.json();
+        setAvailableTimes(data); // Actualizar horarios disponibles
+      } catch (error) {
+        console.error("Error al obtener horarios disponibles:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudieron cargar los horarios disponibles.",
+        });
+      }
+    };
+
+    fetchAvailableTimes();
+  }, [selectedDate, doctorId]);
+
   const handleDayClick = (day) => {
     setSelectedDate(day);
   };
@@ -45,36 +75,54 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
     setIsSidebarExpanded(!isSidebarExpanded);
   };
 
-  const handleSchedule = () => {
-    if (!selectedDate || !selectedTime) {
-      Swal.fire({
-        icon: "warning",
-        title: "¡Faltan datos!",
-        text: "Debes seleccionar una fecha y un horario antes de agendar tu cita.",
-        confirmButtonText: "OK",
-      });
-      return;
-    }
+  const handleReserve = async (timeSlot) => {
+    const { horaInicio, horaFin } = timeSlot;
+    const formattedDate = selectedDate.toISOString().split("T")[0]; // Formato YYYY-MM-DD
 
-    Swal.fire({
-      title: "¿Estás seguro?",
-      text: `Estás a punto de agendar tu cita el día ${selectedDate.toLocaleDateString()} a las ${selectedTime}.`,
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Sí, agendar",
-      cancelButtonText: "Cancelar",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        Swal.fire({
-          icon: "success",
-          title: "¡Cita programada!",
-          text: `Tu cita ha sido programada exitosamente para el ${selectedDate.toLocaleDateString()} a las ${selectedTime}.`,
-          confirmButtonText: "Entendido",
-        }).then(() => {
-          navigate("/");
-        });
+    const payload = {
+      disponibilidadId: 2, // Este valor podría depender del horario específico
+      fecha: formattedDate,
+      horaInicio,
+      horaFin,
+      doctorId,
+      pacienteId,
+    };
+
+    try {
+      const response = await fetch("http://localhost:3000/horarios/reservar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error en la reserva de la cita");
       }
-    });
+
+      const data = await response.json();
+      Swal.fire({
+        icon: "success",
+        title: "¡Cita reservada!",
+        text: data.message,
+        confirmButtonText: "OK",
+      }).then(() => {
+        // Marcar el horario como ocupado
+        setAvailableTimes((prev) =>
+          prev.map((slot) =>
+            slot.horaInicio === horaInicio && slot.horaFin === horaFin
+              ? { ...slot, ocupado: true }
+              : slot
+          )
+        );
+      });
+    } catch (error) {
+      console.error("Error al reservar cita:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo reservar la cita. Inténtalo nuevamente.",
+      });
+    }
   };
 
   const days = getDaysInMonth(
@@ -98,32 +146,12 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
         />
 
         <div className="p-6">
-          {/* Header */}
           <div className="flex items-center w-full max-w-4xl mb-8">
-            <button
-              onClick={() => window.history.back()}
-              className="mr-4 text-gray-700 hover:text-gray-900"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
             <img
-  src={getFullImageUrl(doctorPhoto)} // Usar la función para construir la URL completa
-  alt={doctorName}
-  className="w-12 h-12 rounded-full mr-4"
-/>
-
+              src={getFullImageUrl(doctorPhoto)}
+              alt={doctorName}
+              className="w-12 h-12 rounded-full mr-4"
+            />
             <div>
               <h2 className="text-4xl font-semibold">{doctorName}</h2>
               <p className="text-base text-gray-500">{doctorEspecialidad}</p>
@@ -137,43 +165,9 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
               <h3 className="text-3xl font-semibold text-gray-800 mb-4">
                 Elige el día
               </h3>
-              <div className="flex items-center justify-between mb-4">
-                <button
-                  onClick={() =>
-                    setSelectedDate(
-                      new Date(
-                        selectedDate.getFullYear(),
-                        selectedDate.getMonth() - 1,
-                        1
-                      )
-                    )
-                  }
-                  className="text-gray-600 hover:text-gray-800"
-                >
-                  &lt;
-                </button>
-                <span className="font-light text-gray-800">{currentMonth}</span>
-                <button
-                  onClick={() =>
-                    setSelectedDate(
-                      new Date(
-                        selectedDate.getFullYear(),
-                        selectedDate.getMonth() + 1,
-                        1
-                      )
-                    )
-                  }
-                  className="text-gray-600 hover:text-gray-800"
-                >
-                  &gt;
-                </button>
-              </div>
               <div className="grid grid-cols-7 text-center">
                 {daysOfWeek.map((day) => (
-                  <div
-                    key={day}
-                    className="font-light text-blue-950 pb-2 border-b bg-blue-100 shadow-sm"
-                  >
+                  <div key={day} className="font-light text-blue-950 pb-2">
                     {day}
                   </div>
                 ))}
@@ -181,10 +175,10 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
                   <div
                     key={day}
                     onClick={() => handleDayClick(day)}
-                    className={`py-2 cursor-pointer flex items-center justify-center ${
+                    className={`py-2 cursor-pointer ${
                       selectedDate.toDateString() === day.toDateString()
-                        ? "bg-blue-800 text-white rounded-full"
-                        : "text-gray-700 hover:bg-gray-200 rounded-full"
+                        ? "bg-blue-800 text-white"
+                        : "hover:bg-gray-200"
                     }`}
                   >
                     {day.getDate()}
@@ -199,52 +193,22 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
                 Elige el horario
               </h3>
               <div className="grid grid-cols-4 gap-4">
-                {[
-                  "9:30",
-                  "10:00",
-                  "10:30",
-                  "11:00",
-                  "12:00",
-                  "12:30",
-                  "13:00",
-                  "13:30",
-                  "14:00",
-                  "14:30",
-                  "15:00",
-                  "15:30",
-                  "16:00",
-                  "16:30",
-                  "17:00",
-                  "17:30",
-                  "18:00",
-                  "18:30",
-                  "19:00",
-                  "19:30",
-                ].map((time) => (
+                {availableTimes.map((timeSlot) => (
                   <button
-                    key={time}
-                    onClick={() => setSelectedTime(time)}
+                    key={timeSlot.horaInicio}
+                    onClick={() => handleReserve(timeSlot)}
                     className={`p-2 rounded-lg text-sm font-medium ${
-                      selectedTime === time
-                        ? "bg-blue-800 text-white"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      timeSlot.ocupado
+                        ? "opacity-50 cursor-not-allowed"
+                        : "bg-gray-200 hover:bg-gray-300"
                     }`}
+                    disabled={timeSlot.ocupado}
                   >
-                    {time}
+                    {timeSlot.horaInicio} - {timeSlot.horaFin}
                   </button>
                 ))}
               </div>
             </div>
-          </div>
-
-          {/* Schedule Button */}
-          <div className="mt-8 flex justify-center">
-            <button
-              onClick={handleSchedule}
-              className="bg-blue-800 text-white px-8 py-3 rounded-full text-lg shadow-md hover:bg-blue-700"
-            >
-              Programar cita
-            </button>
           </div>
         </div>
       </div>
