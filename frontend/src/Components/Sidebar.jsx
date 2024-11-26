@@ -265,7 +265,7 @@ const Sidebar = ({
                 }`}
               />
               {isExpanded && (
-                <span className="ml-4 font-medium">Mis Pacientes</span>
+                <span className="ml-4 font-medium">Mis Horarios</span>
               )}
             </Link>
           </>

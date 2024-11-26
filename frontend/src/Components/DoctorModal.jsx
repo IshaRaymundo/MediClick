@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import LoadingOverlay from "./LoadingOverlay"; // Asegúrate de importar correctamente este componente.
+import Swal from "sweetalert2";
+import LoadingOverlay from "./LoadingOverlay";
 
 const getFullImageUrl = (photo) => {
   return photo ? `http://localhost:3000/${photo}` : "https://via.placeholder.com/150";
 };
 
-const DoctorModal = ({ isOpen, doctor, onClose }) => {
+const DoctorModal = ({ isOpen, doctor, onClose, isAuthenticated }) => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +27,27 @@ const DoctorModal = ({ isOpen, doctor, onClose }) => {
   }, [isOpen]);
 
   const handleNavigate = () => {
+    // Verificar si el usuario está autenticado
+    if (!isAuthenticated) {
+      // Cerrar el modal antes de mostrar la alerta
+      onClose();
+      Swal.fire({
+        title: "Para continuar",
+        text: "Por favor regístrate o inicia sesión si ya estás registrado.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Iniciar sesión",
+        cancelButtonText: "Cancelar",
+        reverseButtons: true,
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate("/login");
+        }
+      });
+      return;
+    }
+  
+    // Si está autenticado, proceder con la navegación
     setShowModal(false);
   
     setTimeout(() => {
