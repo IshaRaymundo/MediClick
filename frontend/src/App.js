@@ -13,6 +13,7 @@ import ScheduleAppointment from './Pages/Client/ScheduleAppointment';
 import Appointments from './Pages/Client/Appointments';
 import UserProfile from './Components/Profile';
 import EspecialidadesManagement from './Pages/Admin/Speciality';
+import Schedule from './Pages/Doctor/Schedule';
 
 function App() {
   const [userName, setUserName] = useState('');
@@ -148,6 +149,21 @@ function App() {
             element={
               <ProtectedRoute roleRequired={2}>
                 <DashboardDoc
+                  userName={userName}
+                  userRole={userRole}
+                  setUserName={setUserName}
+                  setUserRole={setUserRole}
+                  handleLogout={handleLogout}
+                />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/Schedule-doc"
+            element={
+              <ProtectedRoute roleRequired={2}>
+                <Schedule
                   userName={userName}
                   userRole={userRole}
                   setUserName={setUserName}

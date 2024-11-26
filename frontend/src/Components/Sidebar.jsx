@@ -7,6 +7,7 @@ import {
   HeartIcon,
   ChevronDownIcon,
   ClipboardDocumentListIcon,
+  ClockIcon,
   UsersIcon,
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
@@ -246,6 +247,19 @@ const Sidebar = ({
               className="flex items-center w-full mb-4 p-2 rounded-lg hover:bg-blue-700 hover:shadow-md text-white transition-all duration-300"
             >
               <ClipboardDocumentListIcon
+                className={`transition-all duration-300 ${
+                  isExpanded ? "w-8 h-8" : "w-6 h-6"
+                }`}
+              />
+              {isExpanded && (
+                <span className="ml-4 font-medium">Mis Pacientes</span>
+              )}
+            </Link>
+            <Link
+              to="/Schedule-doc"
+              className="flex items-center w-full mb-4 p-2 rounded-lg hover:bg-blue-700 hover:shadow-md text-white transition-all duration-300"
+            >
+              <ClockIcon
                 className={`transition-all duration-300 ${
                   isExpanded ? "w-8 h-8" : "w-6 h-6"
                 }`}
