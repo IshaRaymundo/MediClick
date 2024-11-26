@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Navbar from "../../Components/Navbar";
 import Sidebar from "../../Components/Sidebar";
+import Swal from "sweetalert2";
 
 const Schedule = ({ userName, userRole, handleLogout }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -22,12 +23,20 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
   };
 
   const handlePreviousMonth = () => {
-    const newDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1);
+    const newDate = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth() - 1,
+      1
+    );
     setSelectedDate(newDate);
   };
 
   const handleNextMonth = () => {
-    const newDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1);
+    const newDate = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth() + 1,
+      1
+    );
     setSelectedDate(newDate);
   };
 
@@ -37,24 +46,89 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
   };
 
   const handleAddTimeSlot = () => {
-    if (startTime && endTime) {
+    if (startTime && endTime && startTime < endTime) {
       setTimeSlots([...timeSlots, { start: startTime, end: endTime }]);
       setStartTime("");
       setEndTime("");
     } else {
-      alert("Por favor completa los campos de hora de inicio y fin.");
+      Swal.fire({
+        icon: "error",
+        title: "Datos inválidos",
+        text: "Por favor, asegúrate de ingresar una hora de inicio y fin válidas.",
+      });
     }
   };
 
-  const handlePublishSchedule = () => {
-    console.log("Horario publicado:", {
-      date: selectedDate.toDateString(),
-      timeSlots,
-    });
-    alert("¡Horario publicado con éxito!");
+  const handlePublishSchedule = async () => {
+    if (timeSlots.length === 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "No hay horarios",
+        text: "Añade al menos un horario antes de publicar.",
+      });
+      return;
+    }
+  
+    // Obtén el día de la semana en español directamente desde la fecha seleccionada
+    const daysOfWeekSpanish = [
+      "Domingo",
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes",
+      "Sábado",
+    ];
+    const diaSemana = daysOfWeekSpanish[selectedDate.getDay()];
+  
+    try {
+      // Genera un request para cada horario
+      const requests = timeSlots.map(async (slot) => {
+        const payload = {
+          doctorId: 9, // ID del doctor
+          diaSemana: diaSemana, // Día enviado directamente
+          horaInicio: slot.start,
+          horaFin: slot.end,
+          activo: 1,
+        };
+  
+        const response = await fetch("http://localhost:3000/disponibilidades", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+  
+        if (!response.ok) {
+          throw new Error("Error en la publicación del horario");
+        }
+  
+        return response.json();
+      });
+  
+      await Promise.all(requests);
+  
+      Swal.fire({
+        icon: "success",
+        title: "¡Horario publicado!",
+        text: "Tus horarios han sido publicados exitosamente.",
+      });
+  
+      setTimeSlots([]); // Limpia los horarios tras la publicación
+    } catch (error) {
+      console.error("Error al publicar horarios:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Hubo un problema al publicar los horarios. Inténtalo nuevamente.",
+      });
+    }
   };
+  
 
-  const days = getDaysInMonth(selectedDate.getFullYear(), selectedDate.getMonth());
+  const days = getDaysInMonth(
+    selectedDate.getFullYear(),
+    selectedDate.getMonth()
+  );
   const currentMonth = selectedDate.toLocaleDateString("es-ES", {
     month: "long",
     year: "numeric",
@@ -83,26 +157,38 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
             Mi horario
           </h1>
           <p className="text-gray-600 text-center mb-8">
-            Selecciona un día y los horarios que estarás disponible para atender pacientes.
+            Selecciona un día y los horarios que estarás disponible para atender
+            pacientes.
           </p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {/* Selección de día */}
             <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-                Elige el horario
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+                Selecciona el día
               </h2>
               <div className="flex justify-between items-center mb-4">
-                <button onClick={handlePreviousMonth} className="text-black font-light text-xl">
+                <button
+                  onClick={handlePreviousMonth}
+                  className="text-black font-light text-xl"
+                >
                   &lt;
                 </button>
-                <h2 className="text-base font-light text-gray-800">{currentMonth}</h2>
-                <button onClick={handleNextMonth} className="text-black font-light text-xl">
+                <h2 className="text-base font-light text-gray-800">
+                  {currentMonth}
+                </h2>
+                <button
+                  onClick={handleNextMonth}
+                  className="text-black font-light text-xl"
+                >
                   &gt;
                 </button>
               </div>
               <div className="grid grid-cols-7 text-center">
                 {daysOfWeek.map((day) => (
-                  <div key={day} className="font-light text-black bg-blue-100 pb-2">
+                  <div
+                    key={day}
+                    className="font-light text-black bg-blue-100 pb-2"
+                  >
                     {day}
                   </div>
                 ))}
@@ -129,7 +215,9 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
               </h2>
               <div className="flex items-center space-x-4 mb-4">
                 <div>
-                  <label className="block text-gray-700 font-medium text-sm">Inicio:</label>
+                  <label className="block text-gray-700 font-medium text-sm">
+                    Inicio:
+                  </label>
                   <input
                     type="time"
                     value={startTime}
@@ -138,7 +226,9 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-medium text-sm">Fin:</label>
+                  <label className="block text-gray-700 font-medium text-sm">
+                    Fin:
+                  </label>
                   <input
                     type="time"
                     value={endTime}
