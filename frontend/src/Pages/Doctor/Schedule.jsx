@@ -4,44 +4,24 @@ import Sidebar from "../../Components/Sidebar";
 import Swal from "sweetalert2";
 
 const Schedule = ({ userName, userRole, handleLogout }) => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
-  const daysOfWeek = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
-
-  const getDaysInMonth = (year, month) => {
-    const date = new Date(year, month, 1);
-    const days = [];
-    while (date.getMonth() === month) {
-      days.push(new Date(date));
-      date.setDate(date.getDate() + 1);
-    }
-    return days;
-  };
-
-  const handlePreviousMonth = () => {
-    const newDate = new Date(
-      selectedDate.getFullYear(),
-      selectedDate.getMonth() - 1,
-      1
-    );
-    setSelectedDate(newDate);
-  };
-
-  const handleNextMonth = () => {
-    const newDate = new Date(
-      selectedDate.getFullYear(),
-      selectedDate.getMonth() + 1,
-      1
-    );
-    setSelectedDate(newDate);
-  };
+  const daysOfWeek = [
+    { name: "DOM", value: "Domingo" },
+    { name: "LUN", value: "Lunes" },
+    { name: "MAR", value: "Martes" },
+    { name: "MIE", value: "Miércoles" },
+    { name: "JUE", value: "Jueves" },
+    { name: "VIE", value: "Viernes" },
+    { name: "SAB", value: "Sábado" },
+  ];
 
   const handleDayClick = (day) => {
-    setSelectedDate(day);
+    setSelectedDay(day);
     setTimeSlots([]); // Reset slots when selecting a new day
   };
 
@@ -60,6 +40,15 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
   };
 
   const handlePublishSchedule = async () => {
+    if (!selectedDay) {
+      Swal.fire({
+        icon: "warning",
+        title: "No hay día seleccionado",
+        text: "Selecciona un día antes de publicar el horario.",
+      });
+      return;
+    }
+
     if (timeSlots.length === 0) {
       Swal.fire({
         icon: "warning",
@@ -68,51 +57,38 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
       });
       return;
     }
-  
-    // Obtén el día de la semana en español directamente desde la fecha seleccionada
-    const daysOfWeekSpanish = [
-      "Domingo",
-      "Lunes",
-      "Martes",
-      "Miércoles",
-      "Jueves",
-      "Viernes",
-      "Sábado",
-    ];
-    const diaSemana = daysOfWeekSpanish[selectedDate.getDay()];
-  
+
     try {
-      // Genera un request para cada horario
       const requests = timeSlots.map(async (slot) => {
         const payload = {
           doctorId: 9, // ID del doctor
-          diaSemana: diaSemana, // Día enviado directamente
+          diaSemana: selectedDay.value, // Día seleccionado
           horaInicio: slot.start,
           horaFin: slot.end,
           activo: 1,
         };
-  
+
         const response = await fetch("http://localhost:3000/disponibilidades", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-  
+
         if (!response.ok) {
           throw new Error("Error en la publicación del horario");
         }
-  
+
         return response.json();
       });
-  
+
       await Promise.all(requests);
-  
+
       Swal.fire({
         icon: "success",
         title: "¡Horario publicado!",
         text: "Tus horarios han sido publicados exitosamente.",
       });
-  
+
       setTimeSlots([]); // Limpia los horarios tras la publicación
     } catch (error) {
       console.error("Error al publicar horarios:", error);
@@ -123,16 +99,6 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
       });
     }
   };
-  
-
-  const days = getDaysInMonth(
-    selectedDate.getFullYear(),
-    selectedDate.getMonth()
-  );
-  const currentMonth = selectedDate.toLocaleDateString("es-ES", {
-    month: "long",
-    year: "numeric",
-  });
 
   const toggleSidebar = () => {
     setIsSidebarExpanded(!isSidebarExpanded);
@@ -157,8 +123,8 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
             Mi horario
           </h1>
           <p className="text-gray-600 text-center mb-8">
-            Selecciona un día y los horarios que estarás disponible para atender
-            pacientes.
+            Selecciona un día de la semana y los horarios que estarás disponible
+            para atender pacientes.
           </p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {/* Selección de día */}
@@ -166,43 +132,18 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
               <h2 className="text-2xl font-semibold text-gray-800 mb-4">
                 Selecciona el día
               </h2>
-              <div className="flex justify-between items-center mb-4">
-                <button
-                  onClick={handlePreviousMonth}
-                  className="text-black font-light text-xl"
-                >
-                  &lt;
-                </button>
-                <h2 className="text-base font-light text-gray-800">
-                  {currentMonth}
-                </h2>
-                <button
-                  onClick={handleNextMonth}
-                  className="text-black font-light text-xl"
-                >
-                  &gt;
-                </button>
-              </div>
               <div className="grid grid-cols-7 text-center">
                 {daysOfWeek.map((day) => (
                   <div
-                    key={day}
-                    className="font-light text-black bg-blue-100 pb-2"
-                  >
-                    {day}
-                  </div>
-                ))}
-                {days.map((day) => (
-                  <div
-                    key={day}
+                    key={day.name}
                     onClick={() => handleDayClick(day)}
                     className={`py-2 cursor-pointer rounded-full ${
-                      selectedDate.toDateString() === day.toDateString()
+                      selectedDay?.name === day.name
                         ? "bg-blue-800 text-white"
-                        : "hover:bg-gray-200"
+                        : "hover:bg-gray-200 text-gray-800"
                     }`}
                   >
-                    {day.getDate()}
+                    {day.name}
                   </div>
                 ))}
               </div>
