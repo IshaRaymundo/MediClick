@@ -1,27 +1,20 @@
-import React, { useState, useEffect } from "react"; 
+import React, { useState, useEffect } from "react";
 import Navbar from "../../Components/Navbar";
 import Sidebar from "../../Components/Sidebar";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
-const getFullImageUrl = (photo) => {
-  return photo ? `http://localhost:3000/${photo}` : "https://via.placeholder.com/150";
-};
-
 const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState(null);
-  const [availableTimes, setAvailableTimes] = useState([]); // Estado para los horarios disponibles
+  const [availableTimes, setAvailableTimes] = useState([]); // Horarios disponibles del backend
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
-  const doctorId = 2; // Supongamos que este es fijo para este ejemplo
-  const pacienteId = 4; // Este debe provenir del estado del usuario autenticado
   const doctorName = queryParams.get("doctor") || "Doctor";
   const doctorEspecialidad = queryParams.get("especialidad") || "Especialidad";
-  const doctorPhoto = queryParams.get("photo") || "";
 
   const daysOfWeek = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
   const currentMonth = selectedDate.toLocaleDateString("es-ES", {
@@ -29,23 +22,13 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
     year: "numeric",
   });
 
-  const getDaysInMonth = (year, month) => {
-    const date = new Date(year, month, 1);
-    const days = [];
-    while (date.getMonth() === month) {
-      days.push(new Date(date));
-      date.setDate(date.getDate() + 1);
-    }
-    return days;
-  };
-
-  // Llamada al backend para obtener horarios disponibles
+  // Llama al backend para obtener los horarios disponibles
   useEffect(() => {
     const fetchAvailableTimes = async () => {
       const formattedDate = selectedDate.toISOString().split("T")[0]; // Formato YYYY-MM-DD
       try {
         const response = await fetch(
-          `http://localhost:3000/horarios/disponibles?doctorId=${doctorId}&fecha=${formattedDate}`
+          `http://localhost:3000/horarios/disponibles?doctorId=2&fecha=${formattedDate}`
         );
 
         if (!response.ok) {
@@ -53,7 +36,7 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
         }
 
         const data = await response.json();
-        setAvailableTimes(data); // Actualizar horarios disponibles
+        setAvailableTimes(data); // Actualiza los horarios disponibles
       } catch (error) {
         console.error("Error al obtener horarios disponibles:", error);
         Swal.fire({
@@ -65,7 +48,7 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
     };
 
     fetchAvailableTimes();
-  }, [selectedDate, doctorId]);
+  }, [selectedDate]);
 
   const handleDayClick = (day) => {
     setSelectedDate(day);
@@ -80,12 +63,12 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
     const formattedDate = selectedDate.toISOString().split("T")[0]; // Formato YYYY-MM-DD
 
     const payload = {
-      disponibilidadId: 2, // Este valor podría depender del horario específico
+      disponibilidadId: 2, // Este valor debería depender del horario seleccionado
       fecha: formattedDate,
       horaInicio,
       horaFin,
-      doctorId,
-      pacienteId,
+      doctorId: 2, // ID del doctor desde query params
+      pacienteId: 4, // ID del paciente autenticado
     };
 
     try {
@@ -96,7 +79,7 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
       });
 
       if (!response.ok) {
-        throw new Error("Error en la reserva de la cita");
+        throw new Error("Error al reservar la cita");
       }
 
       const data = await response.json();
@@ -106,7 +89,7 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
         text: data.message,
         confirmButtonText: "OK",
       }).then(() => {
-        // Marcar el horario como ocupado
+        // Marca el horario como ocupado en la interfaz
         setAvailableTimes((prev) =>
           prev.map((slot) =>
             slot.horaInicio === horaInicio && slot.horaFin === horaFin
@@ -125,7 +108,25 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
     }
   };
 
-  const days = getDaysInMonth(
+  const getDaysInMonthWithOffset = (year, month) => {
+    const firstDayOfMonth = new Date(year, month, 1).getDay(); // Obtiene el día de la semana del primer día del mes
+    const daysInMonth = new Date(year, month + 1, 0).getDate(); // Número de días en el mes
+    const days = [];
+
+    // Agrega días vacíos al inicio para alinear el primer día del mes con su día de la semana
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      days.push(null);
+    }
+
+    // Agrega los días reales del mes
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day));
+    }
+
+    return days;
+  };
+
+  const days = getDaysInMonthWithOffset(
     selectedDate.getFullYear(),
     selectedDate.getMonth()
   );
@@ -146,10 +147,11 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
         />
 
         <div className="p-6">
+          {/* Header */}
           <div className="flex items-center w-full max-w-4xl mb-8">
             <img
-              src={getFullImageUrl(doctorPhoto)}
-              alt={doctorName}
+              src="https://via.placeholder.com/50"
+              alt="Doctor"
               className="w-12 h-12 rounded-full mr-4"
             />
             <div>
@@ -165,25 +167,64 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
               <h3 className="text-3xl font-semibold text-gray-800 mb-4">
                 Elige el día
               </h3>
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() =>
+                    setSelectedDate(
+                      new Date(
+                        selectedDate.getFullYear(),
+                        selectedDate.getMonth() - 1,
+                        1
+                      )
+                    )
+                  }
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  &lt;
+                </button>
+                <span className="font-light text-gray-800">{currentMonth}</span>
+                <button
+                  onClick={() =>
+                    setSelectedDate(
+                      new Date(
+                        selectedDate.getFullYear(),
+                        selectedDate.getMonth() + 1,
+                        1
+                      )
+                    )
+                  }
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  &gt;
+                </button>
+              </div>
               <div className="grid grid-cols-7 text-center">
                 {daysOfWeek.map((day) => (
-                  <div key={day} className="font-light text-blue-950 pb-2">
+                  <div
+                    key={day}
+                    className="font-light text-blue-950 pb-2 border-b bg-blue-100 shadow-sm"
+                  >
                     {day}
                   </div>
                 ))}
-                {days.map((day) => (
-                  <div
-                    key={day}
-                    onClick={() => handleDayClick(day)}
-                    className={`py-2 cursor-pointer ${
-                      selectedDate.toDateString() === day.toDateString()
-                        ? "bg-blue-800 text-white"
-                        : "hover:bg-gray-200"
-                    }`}
-                  >
-                    {day.getDate()}
-                  </div>
-                ))}
+                {days.map((day, index) =>
+                  day ? (
+                    <div
+                      key={index}
+                      onClick={() => handleDayClick(day)}
+                      className={`py-2 cursor-pointer flex items-center justify-center ${
+                        selectedDate.toDateString() === day.toDateString()
+                          ? "bg-blue-800 text-white rounded-full"
+                          : "text-gray-700 hover:bg-gray-200 rounded-full"
+                      }`}
+                    >
+                      {day.getDate()}
+                    </div>
+                  ) : (
+                    // Día vacío para el offset
+                    <div key={index} className="py-2"></div>
+                  )
+                )}
               </div>
             </div>
 
