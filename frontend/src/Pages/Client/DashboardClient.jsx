@@ -176,12 +176,13 @@ const DoctorList = ({ userName, userRole, handleLogout }) => {
           </section>
         </div>
       </div>
-
       <DoctorModal
-        isOpen={isModalOpen}
-        doctor={selectedDoctor}
-        onClose={handleCloseModal}
-      />
+  isOpen={isModalOpen}
+  doctor={selectedDoctor}
+  isAuthenticated={Boolean(localStorage.getItem("username") && localStorage.getItem("role"))}
+  onClose={handleCloseModal}
+/>
+
     </div>
   );
 };

@@ -160,7 +160,7 @@ function App() {
             }
           />
 
-<Route
+          <Route
             path="/mis-pacientes"
             element={
               <ProtectedRoute roleRequired={2}>
