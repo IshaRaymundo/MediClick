@@ -1,20 +1,25 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../../Components/Navbar";
 import Sidebar from "../../Components/Sidebar";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
+
+const getFullImageUrl = (photo) => {
+  return photo
+    ? `http://localhost:3000/${photo}`
+    : "https://via.placeholder.com/150";
+};
 
 const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedTime, setSelectedTime] = useState(null);
-  const [availableTimes, setAvailableTimes] = useState([]); // Horarios disponibles del backend
+  const [availableTimes, setAvailableTimes] = useState([]);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   const location = useLocation();
-  const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
   const doctorName = queryParams.get("doctor") || "Doctor";
   const doctorEspecialidad = queryParams.get("especialidad") || "Especialidad";
+  const doctorPhoto = queryParams.get("photo") || "";
 
   const daysOfWeek = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
   const currentMonth = selectedDate.toLocaleDateString("es-ES", {
@@ -25,7 +30,7 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
   // Llama al backend para obtener los horarios disponibles
   useEffect(() => {
     const fetchAvailableTimes = async () => {
-      const formattedDate = selectedDate.toISOString().split("T")[0]; // Formato YYYY-MM-DD
+      const formattedDate = selectedDate.toISOString().split("T")[0];
       try {
         const response = await fetch(
           `http://localhost:3000/horarios/disponibles?doctorId=2&fecha=${formattedDate}`
@@ -36,7 +41,7 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
         }
 
         const data = await response.json();
-        setAvailableTimes(data); // Actualiza los horarios disponibles
+        setAvailableTimes(data);
       } catch (error) {
         console.error("Error al obtener horarios disponibles:", error);
         Swal.fire({
@@ -60,15 +65,15 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
 
   const handleReserve = async (timeSlot) => {
     const { horaInicio, horaFin } = timeSlot;
-    const formattedDate = selectedDate.toISOString().split("T")[0]; // Formato YYYY-MM-DD
+    const formattedDate = selectedDate.toISOString().split("T")[0];
 
     const payload = {
-      disponibilidadId: 2, // Este valor debería depender del horario seleccionado
+      disponibilidadId: 2,
       fecha: formattedDate,
       horaInicio,
       horaFin,
-      doctorId: 2, // ID del doctor desde query params
-      pacienteId: 4, // ID del paciente autenticado
+      doctorId: 2,
+      pacienteId: 4,
     };
 
     try {
@@ -89,7 +94,6 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
         text: data.message,
         confirmButtonText: "OK",
       }).then(() => {
-        // Marca el horario como ocupado en la interfaz
         setAvailableTimes((prev) =>
           prev.map((slot) =>
             slot.horaInicio === horaInicio && slot.horaFin === horaFin
@@ -109,16 +113,14 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
   };
 
   const getDaysInMonthWithOffset = (year, month) => {
-    const firstDayOfMonth = new Date(year, month, 1).getDay(); // Obtiene el día de la semana del primer día del mes
-    const daysInMonth = new Date(year, month + 1, 0).getDate(); // Número de días en el mes
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
     const days = [];
 
-    // Agrega días vacíos al inicio para alinear el primer día del mes con su día de la semana
     for (let i = 0; i < firstDayOfMonth; i++) {
       days.push(null);
     }
 
-    // Agrega los días reales del mes
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(new Date(year, month, day));
     }
@@ -132,7 +134,7 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
   );
 
   return (
-    <div className="flex">
+    <div className="flex bg-gray-50 min-h-screen">
       <Sidebar
         isExpanded={isSidebarExpanded}
         userName={userName}
@@ -147,12 +149,11 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
         />
 
         <div className="p-6">
-          {/* Header */}
           <div className="flex items-center w-full max-w-4xl mb-8">
             <img
-              src="https://via.placeholder.com/50"
-              alt="Doctor"
-              className="w-12 h-12 rounded-full mr-4"
+              src={getFullImageUrl(doctorPhoto)}
+              alt={doctorName}
+              className="w-16 h-16 rounded-full mr-4 border-2 border-gray-300 object-cover"
             />
             <div>
               <h2 className="text-4xl font-semibold">{doctorName}</h2>
@@ -221,7 +222,6 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
                       {day.getDate()}
                     </div>
                   ) : (
-                    // Día vacío para el offset
                     <div key={index} className="py-2"></div>
                   )
                 )}
