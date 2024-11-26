@@ -12,6 +12,7 @@ import ResetPassword from './Auth/ResetPassword';
 import ScheduleAppointment from './Pages/Client/ScheduleAppointment';
 import Appointments from './Pages/Client/Appointments';
 import UserProfile from './Components/Profile';
+import EspecialidadesManagement from './Pages/Admin/Speciality';
 
 function App() {
   const [userName, setUserName] = useState('');
@@ -119,6 +120,20 @@ function App() {
             element={
               <ProtectedRoute roleRequired={1}>
                 <UserManagement
+                  userName={userName}
+                  userRole={userRole}
+                  setUserName={setUserName}
+                  setUserRole={setUserRole}
+                  handleLogout={handleLogout}
+                />
+              </ProtectedRoute>
+            }
+          />
+                    <Route
+            path="/especialidades"
+            element={
+              <ProtectedRoute roleRequired={1}>
+                <EspecialidadesManagement
                   userName={userName}
                   userRole={userRole}
                   setUserName={setUserName}

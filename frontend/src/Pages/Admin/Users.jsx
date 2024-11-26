@@ -7,9 +7,10 @@ import Sidebar from '../../Components/Sidebar';
 
 const UserManagement = ({ userName, userRole, handleLogout }) => {
   const [users, setUsers] = useState([]);
+  const [especialidades, setEspecialidades] = useState([]);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [newUser, setNewUser] = useState({ username: '', email: '', password: '', role_id: 3 });
+  const [newUser, setNewUser] = useState({ username: '', email: '', password: '', role_id: 3, especialidad_id: null });
   const [roleFilter, setRoleFilter] = useState("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -17,17 +18,27 @@ const UserManagement = ({ userName, userRole, handleLogout }) => {
 
   useEffect(() => {
     fetchUsers();
+    fetchEspecialidades();
   }, [roleFilter]);
 
   const fetchUsers = async () => {
     try {
       const response = await axios.get('http://localhost:3000/users');
-      const filteredUsers = response.data.filter(user => 
+      const filteredUsers = response.data.filter(user =>
         roleFilter === "all" ? true : user.role_id === (roleFilter === "doctor" ? 2 : 3)
       );
       setUsers(filteredUsers);
     } catch (error) {
       console.error('Error al obtener usuarios:', error);
+    }
+  };
+
+  const fetchEspecialidades = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/especialidades');
+      setEspecialidades(response.data);
+    } catch (error) {
+      console.error('Error al obtener especialidades:', error);
     }
   };
 
@@ -56,23 +67,33 @@ const UserManagement = ({ userName, userRole, handleLogout }) => {
   };
 
   const openEditModal = (user) => {
-    setEditingUser({ ...user, password: '' });
+    setEditingUser({ ...user, especialidad_id: null, password: '' });
+    if (user.role_id === 2) fetchEspecialidades();
   };
 
   const closeModal = () => {
     setEditingUser(null);
     setIsAddModalOpen(false);
-    setNewUser({ username: '', email: '', password: '', role_id: 3 });
+    setNewUser({ username: '', email: '', password: '', role_id: 3, especialidad_id: null });
   };
 
   const handleEditSubmit = async () => {
     try {
+      // Actualizar usuario
       await axios.put(`http://localhost:3000/users/${editingUser.id}`, {
         username: editingUser.username,
         email: editingUser.email,
         password: editingUser.password || null,
         role_id: editingUser.role_id,
       });
+
+      // Asociar especialidad si el rol es doctor
+      if (editingUser.role_id === 2 && editingUser.especialidad_id) {
+        await axios.post(`http://localhost:3000/doctores/${editingUser.id}/especialidades`, {
+          especialidadId: editingUser.especialidad_id,
+        });
+      }
+
       fetchUsers();
       closeModal();
       Swal.fire('Actualizado', 'El usuario ha sido actualizado correctamente.', 'success');
@@ -84,35 +105,43 @@ const UserManagement = ({ userName, userRole, handleLogout }) => {
 
   const handleAddSubmit = async () => {
     try {
-      await axios.post(`http://localhost:3000/users/create`, {
+      // Crear usuario
+      const userResponse = await axios.post(`http://localhost:3000/users/create`, {
         username: newUser.username,
         email: newUser.email,
         password: newUser.password,
         role_id: newUser.role_id,
       });
+
+      // Asociar especialidad si el rol es doctor
+      if (newUser.role_id === 2 && newUser.especialidad_id) {
+        await axios.post(`http://localhost:3000/doctores/${userResponse.data.id}/especialidades`, {
+          especialidadId: newUser.especialidad_id,
+        });
+      }
+
       fetchUsers();
       closeModal();
       Swal.fire('Usuario creado', 'El nuevo usuario ha sido agregado exitosamente.', 'success');
     } catch (error) {
-      if (error.response && error.response.status === 400) {
-        Swal.fire('Error', error.response.data.message, 'error');
-      } else {
-        console.error('Error al agregar usuario:', error);
-        Swal.fire('Error', 'No se pudo agregar el usuario.', 'error');
-      }
+      console.error('Error al agregar usuario:', error);
+      Swal.fire('Error', 'No se pudo agregar el usuario.', 'error');
     }
   };
 
   const handleRoleFilterChange = (e) => {
     setRoleFilter(e.target.value);
-    setCurrentPage(1); // Reset to first page on filter change
+    setCurrentPage(1);
   };
 
-  const handleRoleChangeInModal = (newRoleId) => {
-    setEditingUser((prev) => ({ ...prev, role_id: newRoleId }));
+  const handleRoleChangeInModal = (roleId, isEdit = false) => {
+    if (isEdit) {
+      setEditingUser((prev) => ({ ...prev, role_id: roleId, especialidad_id: null }));
+    } else {
+      setNewUser((prev) => ({ ...prev, role_id: roleId, especialidad_id: null }));
+    }
   };
 
-  // Paginación
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = users.slice(indexOfFirstItem, indexOfLastItem);
@@ -124,7 +153,7 @@ const UserManagement = ({ userName, userRole, handleLogout }) => {
 
   return (
     <div className="flex">
-      <Sidebar isExpanded={isSidebarExpanded} userName={userName} userRole={userRole} handleLogout={handleLogout}/>
+      <Sidebar isExpanded={isSidebarExpanded} userName={userName} userRole={userRole} handleLogout={handleLogout} />
       <div className="flex-1">
         <Navbar
           userName={userName}
@@ -158,9 +187,9 @@ const UserManagement = ({ userName, userRole, handleLogout }) => {
               <thead>
                 <tr>
                   <th className="py-4 px-6 border-b bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">ID</th>
-                  <th className="py-4 px-6 border-b bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">Nombre de Usuario</th>
-                  <th className="py-4 px-6 border-b bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">Correo Electrónico</th>
-                  <th className="py-4 px-6 border-b bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">Rol Actual</th>
+                  <th className="py-4 px-6 border-b bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">Nombre</th>
+                  <th className="py-4 px-6 border-b bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">Correo</th>
+                  <th className="py-4 px-6 border-b bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">Rol</th>
                   <th className="py-4 px-6 border-b bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold">Acciones</th>
                 </tr>
               </thead>
@@ -206,85 +235,14 @@ const UserManagement = ({ userName, userRole, handleLogout }) => {
         </div>
       </div>
 
-      {/* Modal para editar usuario */}
-      {editingUser && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 transition-opacity duration-300 ease-out z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md transform transition-all duration-300 ease-out scale-95">
-            <h2 className="text-2xl font-bold mb-4 text-center">Editar Usuario</h2>
-            <form onSubmit={(e) => { e.preventDefault(); handleEditSubmit(); }}>
-              <div className="mb-4">
-                <label className="block text-gray-700">Nombre de Usuario</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border rounded-md"
-                  value={editingUser.username}
-                  onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })}
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700">Correo Electrónico</label>
-                <input
-                  type="email"
-                  className="w-full px-4 py-2 border rounded-md"
-                  value={editingUser.email}
-                  onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700">Rol de Usuario</label>
-                <div className="flex space-x-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      checked={editingUser.role_id === 1}
-                      onChange={() => handleRoleChangeInModal(1)}
-                    />
-                    <span className="ml-2">Admin</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      checked={editingUser.role_id === 2}
-                      onChange={() => handleRoleChangeInModal(2)}
-                    />
-                    <span className="ml-2">Doctor</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      checked={editingUser.role_id === 3}
-                      onChange={() => handleRoleChangeInModal(3)}
-                    />
-                    <span className="ml-2">Paciente</span>
-                  </label>
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700">Nueva Contraseña (dejar en blanco para no cambiar)</label>
-                <input
-                  type="password"
-                  className="w-full px-4 py-2 border rounded-md"
-                  placeholder="Nueva contraseña"
-                  onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })}
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <button type="button" onClick={closeModal} className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md">Guardar</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal para agregar usuario */}
+      {/* Modales */}
       {isAddModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md transform transition-all duration-300 ease-out scale-95">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
             <h2 className="text-2xl font-bold mb-4 text-center">Agregar Usuario</h2>
             <form onSubmit={(e) => { e.preventDefault(); handleAddSubmit(); }}>
               <div className="mb-4">
-                <label className="block text-gray-700">Nombre de Usuario</label>
+                <label className="block text-gray-700">Nombre</label>
                 <input
                   type="text"
                   className="w-full px-4 py-2 border rounded-md"
@@ -293,7 +251,7 @@ const UserManagement = ({ userName, userRole, handleLogout }) => {
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700">Correo Electrónico</label>
+                <label className="block text-gray-700">Correo</label>
                 <input
                   type="email"
                   className="w-full px-4 py-2 border rounded-md"
@@ -302,46 +260,97 @@ const UserManagement = ({ userName, userRole, handleLogout }) => {
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700">Contraseña</label>
-                <input
-                  type="password"
+                <label className="block text-gray-700">Rol</label>
+                <select
+                  value={newUser.role_id}
+                  onChange={(e) => handleRoleChangeInModal(parseInt(e.target.value), false)}
                   className="w-full px-4 py-2 border rounded-md"
-                  value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                />
+                >
+                  <option value={1}>Admin</option>
+                  <option value={2}>Doctor</option>
+                  <option value={3}>Paciente</option>
+                </select>
               </div>
-              <div className="mb-4">
-                <label className="block text-gray-700">Rol de Usuario</label>
-                <div className="flex space-x-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      checked={newUser.role_id === 1}
-                      onChange={() => setNewUser({ ...newUser, role_id: 1 })}
-                    />
-                    <span className="ml-2">Admin</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      checked={newUser.role_id === 2}
-                      onChange={() => setNewUser({ ...newUser, role_id: 2 })}
-                    />
-                    <span className="ml-2">Doctor</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      checked={newUser.role_id === 3}
-                      onChange={() => setNewUser({ ...newUser, role_id: 3 })}
-                    />
-                    <span className="ml-2">Paciente</span>
-                  </label>
+              {/* {newUser.role_id === 2 && (
+                <div className="mb-4">
+                  <label className="block text-gray-700">Especialidad</label>
+                  <select
+                    value={newUser.especialidad_id || ''}
+                    onChange={(e) => setNewUser({ ...newUser, especialidad_id: e.target.value })}
+                    className="w-full px-4 py-2 border rounded-md"
+                  >
+                    <option value="" disabled>Selecciona una especialidad</option>
+                    {especialidades.map((especialidad) => (
+                      <option key={especialidad.id} value={especialidad.id}>
+                        {especialidad.nombre}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              </div>
+              )} */}
               <div className="flex justify-end space-x-2">
                 <button type="button" onClick={closeModal} className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md">Cancelar</button>
                 <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded-md">Agregar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {editingUser && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4 text-center">Editar Usuario</h2>
+            <form onSubmit={(e) => { e.preventDefault(); handleEditSubmit(); }}>
+              <div className="mb-4">
+                <label className="block text-gray-700">Nombre</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border rounded-md"
+                  value={editingUser.username}
+                  onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })}
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700">Correo</label>
+                <input
+                  type="email"
+                  className="w-full px-4 py-2 border rounded-md"
+                  value={editingUser.email}
+                  onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700">Rol</label>
+                <select
+                  value={editingUser.role_id}
+                  onChange={(e) => handleRoleChangeInModal(parseInt(e.target.value), true)}
+                  className="w-full px-4 py-2 border rounded-md"
+                >
+                  <option value={1}>Admin</option>
+                  <option value={2}>Doctor</option>
+                  <option value={3}>Paciente</option>
+                </select>
+              </div>
+              {editingUser.role_id === 2 && (
+                <div className="mb-4">
+                  <label className="block text-gray-700">Especialidad</label>
+                  <select
+                    value={editingUser.especialidad_id || ''}
+                    onChange={(e) => setEditingUser({ ...editingUser, especialidad_id: e.target.value })}
+                    className="w-full px-4 py-2 border rounded-md"
+                  >
+                    <option value="" disabled>Selecciona una especialidad</option>
+                    {especialidades.map((especialidad) => (
+                      <option key={especialidad.id} value={especialidad.id}>
+                        {especialidad.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div className="flex justify-end space-x-2">
+                <button type="button" onClick={closeModal} className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded-md">Guardar</button>
               </div>
             </form>
           </div>
