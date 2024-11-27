@@ -54,17 +54,23 @@ const AppointmentsDoc = ({ userName, userRole, handleLogout }) => {
                     <th className="px-10 py-3 text-left text-gray-600 bg-blue-100">Paciente</th>
                     <th className="px-10 py-3 text-left text-gray-600 bg-blue-100">Fecha</th>
                     <th className="px-10 py-3 text-left text-gray-600 bg-blue-100">Hora</th>
+                    <th className="px-10 py-3 text-left text-gray-600 bg-blue-100">Doctor</th>
+
                   </tr>
                 </thead>
                 <tbody>
-                  {appointments.map((appointment) => (
-                    <tr key={appointment.id}>
-<td className="px-10 py-6 text-gray-800">{appointment.paciente_nombre}</td>
-<td className="px-10 py-6 text-gray-800">{new Date(appointment.fecha).toLocaleDateString()}</td>
-                      <td className="px-10 py-6 text-gray-800">{appointment.hora_inicio}</td>
-                    </tr>
-                  ))}
-                </tbody>
+  {appointments.map((appointment) => (
+    appointment.doctor_nombre.toLowerCase() === userName.toLowerCase() ? (
+      <tr key={appointment.citaId}>
+        <td className="px-10 py-6 text-gray-800">{appointment.paciente_nombre}</td>
+        <td className="px-10 py-6 text-gray-800">{new Date(appointment.fecha).toLocaleDateString()}</td>
+        <td className="px-10 py-6 text-gray-800">{appointment.hora_inicio}</td>
+        <td className="px-10 py-6 text-gray-800">{appointment.doctor_nombre}</td>
+      </tr>
+    ) : null // Omitir esta fila si no hay coincidencia
+  ))}
+</tbody>
+
               </table>
             </div>
           )}

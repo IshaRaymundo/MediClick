@@ -16,7 +16,7 @@ class Cita {
     }
 
  // Obtener todas las citas con el nombre del paciente
-// Obtener todas las citas con los nombres del doctor y del paciente
+// Modelo: Cita.js
 static async getAllCitas() {
     await checkConnection();
     const connection = await pool.getConnection();
@@ -32,10 +32,12 @@ static async getAllCitas() {
                 citas.estado_id,
                 horarios_ocupados.id AS disponibilidad_id,
                 usuarios.username AS doctor_nombre,
+                paciente.username AS paciente_nombre, 
                 GROUP_CONCAT(DISTINCT especialidades.nombre SEPARATOR ', ') AS especialidades
             FROM citas
             JOIN doctores ON citas.doctor_id = doctores.id
             JOIN users AS usuarios ON doctores.user_id = usuarios.id
+            LEFT JOIN users AS paciente ON citas.user_id = paciente.id  
             LEFT JOIN doctor_especialidad ON doctores.id = doctor_especialidad.doctor_id
             LEFT JOIN especialidades ON doctor_especialidad.especialidad_id = especialidades.id
             LEFT JOIN horarios_ocupados ON horarios_ocupados.disponibilidad_id = citas.doctor_id
@@ -47,9 +49,6 @@ static async getAllCitas() {
         connection.release();
     }
 }
-
-
-
 
     // Actualizar el estado de una cita
     static async updateEstadoCita(citaId, estadoId) {
@@ -78,3 +77,5 @@ static async getAllCitas() {
 }
 
 module.exports = Cita;
+
+
