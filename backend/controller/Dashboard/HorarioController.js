@@ -6,30 +6,30 @@ class HorarioController {
     // Mapear horarios disponibles
     static async getHorariosDisponibles(req, res) {
         const { doctorId, fecha } = req.query;
-
+    
         if (!doctorId || !fecha) {
             return res.status(400).json({ message: 'doctorId y fecha son obligatorios' });
         }
-
+    
         try {
             // Determinar el día de la semana a partir de la fecha
             const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
             const diaSemana = diasSemana[new Date(fecha).getDay()];
-
+    
             // Obtener disponibilidades para el doctor en ese día de la semana
             const disponibilidades = await Disponibilidad.getDisponibilidadesByDoctorIdAndDiaSemana(doctorId, diaSemana);
-
+    
             const horarios = [];
-
+    
             for (const disponibilidad of disponibilidades) {
                 // Generar los horarios para la fecha exacta pasada
                 let current = new Date(`${fecha}T${disponibilidad.hora_inicio}`);
                 const end = new Date(`${fecha}T${disponibilidad.hora_fin}`);
-
+    
                 while (current < end) {
                     const next = new Date(current);
                     next.setHours(current.getHours() + 1);
-
+    
                     // Verificar si el horario ya está ocupado para la fecha específica
                     const isOcupado = await HorarioOcupado.isHorarioOcupado(
                         disponibilidad.id,
@@ -37,18 +37,20 @@ class HorarioController {
                         current.toTimeString().slice(0, 8),
                         next.toTimeString().slice(0, 8)
                     );
-
+    
+                    // Agregar el objeto al arreglo con el campo disponibilidadId
                     horarios.push({
+                        disponibilidadId: disponibilidad.id, // Incluir disponibilidadId
                         fecha, // Incluye la fecha específica
                         horaInicio: current.toTimeString().slice(0, 8),
                         horaFin: next.toTimeString().slice(0, 8),
                         ocupado: isOcupado,
                     });
-
+    
                     current = next;
                 }
             }
-
+    
             res.status(200).json(horarios);
         } catch (error) {
             console.error('Error al obtener horarios disponibles:', error.message);

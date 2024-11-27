@@ -29,6 +29,7 @@ class AuthController {
             if (!user) {
                 return res.status(400).json({ message: 'Usuario o contraseña incorrectos' });
             }
+            console.log("Usuario encontrado:", user);
     
             const isPasswordMatch = await bcrypt.compare(password, user.password);
             if (!isPasswordMatch) {

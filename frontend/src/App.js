@@ -21,39 +21,49 @@ function App() {
   const [userRole, setUserRole] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
+  const [userId, setUserId] = useState(null);
+
 
 
   useEffect(() => {
     const savedUserName = localStorage.getItem('username');
     const savedUserRole = localStorage.getItem('role');
     const savedUserEmail = localStorage.getItem('email');
-  
-    if (savedUserName && savedUserRole) {
+    const savedUserId = localStorage.getItem('userId');
+    console.log("userId cargado desde localStorage en App.js:", savedUserId);
+
+    if (savedUserName && savedUserRole && savedUserId) {
       setUserName(savedUserName);
       setUserRole(Number(savedUserRole));
       setUserEmail(savedUserEmail || "Correo no disponible");
+      setUserId(Number(savedUserId));
     }
     setIsLoading(false);
   }, []);
-  
+
+
 
   useEffect(() => {
-    if (userName && userRole !== null) {
+    if (userName && userRole !== null && userId !== null) {
       localStorage.setItem('username', userName);
       localStorage.setItem('role', userRole);
       localStorage.setItem('email', userEmail);
+      localStorage.setItem('userId', userId);
     }
-  }, [userName, userRole, userEmail]);
+  }, [userName, userRole, userEmail, userId]);
+
 
   const handleLogout = () => {
     setUserName(null);
     setUserRole(null);
-    setUserEmail(null); 
+    setUserEmail(null);
+    setUserId(null);
     localStorage.removeItem('username');
+    localStorage.removeItem('userId');
     localStorage.removeItem('role');
     localStorage.removeItem('email');
   };
-  
+
 
   const ProtectedRoute = ({ roleRequired, children }) => {
     if (isLoading) return null;
@@ -94,7 +104,7 @@ function App() {
             path="/register"
             element={<Register setUserName={setUserName} />}
           />
-                    <Route
+          <Route
             path="/forgot-password"
             element={<ForgotPassword setUserName={setUserName} setUserRole={setUserRole} />}
           />
@@ -104,7 +114,7 @@ function App() {
             element={<ResetPassword setUserName={setUserName} />}
           />
           <Route
-            path="/admin-dashboard" 
+            path="/admin-dashboard"
             element={
               <ProtectedRoute roleRequired={1}>
                 <Dashboard
@@ -131,7 +141,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-                    <Route
+          <Route
             path="/especialidades"
             element={
               <ProtectedRoute roleRequired={1}>
@@ -198,6 +208,7 @@ function App() {
                 <ScheduleAppointment
                   userName={userName}
                   userRole={userRole}
+                  userId={userId} // Pasa userId como prop
                   setUserName={setUserName}
                   setUserRole={setUserRole}
                   handleLogout={handleLogout}
@@ -221,17 +232,17 @@ function App() {
             }
           />
 
-<Route
-  path="/perfil"
-  element={
-    <UserProfile
-      userName={userName}
-      userEmail={userEmail}
-      userRole={userRole}
-      handleLogout={handleLogout}
-    />
-  }
-/>
+          <Route
+            path="/perfil"
+            element={
+              <UserProfile
+                userName={userName}
+                userEmail={userEmail}
+                userRole={userRole}
+                handleLogout={handleLogout}
+              />
+            }
+          />
 
 
         </Routes>

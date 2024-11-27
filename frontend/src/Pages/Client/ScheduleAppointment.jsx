@@ -10,6 +10,13 @@ const getFullImageUrl = (photo) => {
     : "https://via.placeholder.com/150";
 };
 
+const formatDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const ScheduleAppointment = ({ userName, userRole, userId, handleLogout }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [availableTimes, setAvailableTimes] = useState([]);
@@ -18,10 +25,30 @@ const ScheduleAppointment = ({ userName, userRole, userId, handleLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
-  const doctorId = queryParams.get("doctorId"); // Obtener doctorId de los parámetros
+
+  // Obtener currentUserId, respaldado por localStorage si no está definido
+  const currentUserId = userId || localStorage.getItem("userId");
+
+  useEffect(() => {
+    console.log("currentUserId en ScheduleAppointment:", currentUserId);
+  }, [currentUserId]);
+
+  const doctorId = queryParams.get("doctorId");
   const doctorName = queryParams.get("doctor") || "Doctor";
   const doctorEspecialidad = queryParams.get("especialidad") || "Especialidad";
   const doctorPhoto = queryParams.get("photo") || "";
+
+  useEffect(() => {
+    if (!doctorId) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo identificar al doctor. Por favor, vuelve a intentarlo.",
+      }).then(() => {
+        navigate("/"); // Redirige al usuario si no hay doctorId
+      });
+    }
+  }, [doctorId, navigate]);
 
   const daysOfWeek = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
   const currentMonth = selectedDate.toLocaleDateString("es-ES", {
@@ -30,18 +57,24 @@ const ScheduleAppointment = ({ userName, userRole, userId, handleLogout }) => {
   });
 
   useEffect(() => {
+    if (!doctorId) return;
+
     const fetchAvailableTimes = async () => {
-      const formattedDate = selectedDate.toISOString().split("T")[0];
+      const formattedDate = formatDate(selectedDate);
+
+      const requestUrl = `http://localhost:3000/horarios/disponibles?doctorId=${doctorId}&fecha=${formattedDate}`;
+      console.log(`Fetching horarios from: ${requestUrl}`);
+
       try {
-        const response = await fetch(
-          `http://localhost:3000/horarios/disponibles?doctorId=${doctorId}&fecha=${formattedDate}`
-        );
+        const response = await fetch(requestUrl);
 
         if (!response.ok) {
           throw new Error("Error en la respuesta del servidor");
         }
 
         const data = await response.json();
+        console.log("Horarios recibidos:", data);
+
         setAvailableTimes(data);
       } catch (error) {
         console.error("Error al obtener horarios disponibles:", error);
@@ -57,6 +90,7 @@ const ScheduleAppointment = ({ userName, userRole, userId, handleLogout }) => {
   }, [selectedDate, doctorId]);
 
   const handleDayClick = (day) => {
+    console.log("Fecha seleccionada:", day);
     setSelectedDate(day);
   };
 
@@ -64,18 +98,45 @@ const ScheduleAppointment = ({ userName, userRole, userId, handleLogout }) => {
     setIsSidebarExpanded(!isSidebarExpanded);
   };
 
+  const handleReserve = (timeSlot) => {
+    Swal.fire({
+      title: "Confirmar reserva",
+      text: `¿Estás seguro de reservar este horario? ${timeSlot.horaInicio} - ${timeSlot.horaFin}`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Sí, reservar",
+      cancelButtonText: "Cancelar",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        confirmReservation(timeSlot);
+      }
+    });
+  };
+
   const confirmReservation = async (timeSlot) => {
     const { horaInicio, horaFin } = timeSlot;
-    const formattedDate = selectedDate.toISOString().split("T")[0];
+    const formattedDate = formatDate(selectedDate);
+
+    // Verifica si `currentUserId` es válido
+    if (!currentUserId) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se ha identificado al usuario. Por favor, inicia sesión nuevamente.",
+      });
+      return;
+    }
 
     const payload = {
-      disponibilidadId: 11, // Este valor debe ser dinámico si está relacionado con la disponibilidad
+      disponibilidadId: timeSlot.disponibilidadId,
       fecha: formattedDate,
       horaInicio,
       horaFin,
       doctorId: parseInt(doctorId, 10),
-      pacienteId: userId, // ID del paciente autenticado
+      pacienteId: Number(currentUserId), // Asegúrate de convertirlo a número
     };
+
+    console.log("Payload enviado al reservar:", payload);
 
     try {
       const response = await fetch("http://localhost:3000/horarios/reservar", {
@@ -85,7 +146,9 @@ const ScheduleAppointment = ({ userName, userRole, userId, handleLogout }) => {
       });
 
       if (!response.ok) {
-        throw new Error("Error al reservar la cita");
+        const errorData = await response.json();
+        console.error("Error en la respuesta del servidor:", errorData);
+        throw new Error(errorData.message || "Error al reservar el horario");
       }
 
       const data = await response.json();
@@ -111,24 +174,9 @@ const ScheduleAppointment = ({ userName, userRole, userId, handleLogout }) => {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "No se pudo reservar la cita. Inténtalo nuevamente.",
+        text: error.message || "No se pudo reservar la cita. Inténtalo nuevamente.",
       });
     }
-  };
-
-  const handleReserve = (timeSlot) => {
-    Swal.fire({
-      title: "Confirmar reserva",
-      text: `¿Estás seguro de reservar este horario? ${timeSlot.horaInicio} - ${timeSlot.horaFin}`,
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Sí, reservar",
-      cancelButtonText: "Cancelar",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        confirmReservation(timeSlot);
-      }
-    });
   };
 
   const getDaysInMonthWithOffset = (year, month) => {
@@ -250,20 +298,26 @@ const ScheduleAppointment = ({ userName, userRole, userId, handleLogout }) => {
                 Elige el horario
               </h3>
               <div className="grid grid-cols-4 gap-4">
-                {availableTimes.map((timeSlot) => (
-                  <button
-                    key={timeSlot.horaInicio}
-                    onClick={() => handleReserve(timeSlot)}
-                    className={`p-2 rounded-lg text-sm font-medium ${
-                      timeSlot.ocupado
-                        ? "opacity-50 cursor-not-allowed"
-                        : "bg-gray-200 hover:bg-gray-300"
-                    }`}
-                    disabled={timeSlot.ocupado}
-                  >
-                    {timeSlot.horaInicio} - {timeSlot.horaFin}
-                  </button>
-                ))}
+                {availableTimes.length > 0 ? (
+                  availableTimes.map((timeSlot) => (
+                    <button
+                      key={timeSlot.horaInicio}
+                      onClick={() => handleReserve(timeSlot)}
+                      className={`p-2 rounded-lg text-sm font-medium ${
+                        timeSlot.ocupado
+                          ? "opacity-50 cursor-not-allowed"
+                          : "bg-gray-200 hover:bg-gray-300"
+                      }`}
+                      disabled={timeSlot.ocupado}
+                    >
+                      {timeSlot.horaInicio} - {timeSlot.horaFin}
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center col-span-4">
+                    No hay horarios disponibles para este día.
+                  </p>
+                )}
               </div>
             </div>
           </div>

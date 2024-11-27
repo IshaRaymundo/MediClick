@@ -14,34 +14,40 @@ const Login = ({ setUserName, setUserRole, setUserEmail }) => {
     e.preventDefault();
 
     try {
-        const response = await axios.post('http://localhost:3000/login', {
-            username,
-            password,
-        });
-        console.log("Respuesta de la API:", response.data);
+      const response = await axios.post('http://localhost:3000/login', {
+        username,
+        password,
+      });
+      console.log("Respuesta de la API:", response.data);
+      if (!response.data.userId) {
+        console.error("Error: userId no recibido de la API.");
+        setError("No se pudo obtener el ID del usuario. Intente nuevamente.");
+        return;
+      }
 
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('username', username);
-        localStorage.setItem('role', response.data.role);
-        localStorage.setItem('email', response.data.email);
-        localStorage.setItem('userId', response.data.userId); // Guardar el userId
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('username', username);
+      localStorage.setItem('role', response.data.role);
+      localStorage.setItem('email', response.data.email);
+      localStorage.setItem('userId', response.data.userId); // Guardar el userId
+      console.log("User ID guardado en localStorage:", localStorage.getItem('userId'));
 
-        setUserName(username);
-        setUserRole(response.data.role);
-        setUserEmail(response.data.email);
+      setUserName(username);
+      setUserRole(response.data.role);
+      setUserEmail(response.data.email);
 
-        if (response.data.role === 1) {
-            navigate('/admin-dashboard');
-        } else if (response.data.role === 2) {
-            navigate('/dashboard-doc');
-        } else {
-            navigate('/');
-        }
+      if (response.data.role === 1) {
+        navigate('/admin-dashboard');
+      } else if (response.data.role === 2) {
+        navigate('/dashboard-doc');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
-        setError(err.response?.data?.message || 'Error en el servidor');
-        console.error("Error en login:", err.response?.data || err);
+      setError(err.response?.data?.message || 'Error en el servidor');
+      console.error("Error en login:", err.response?.data || err);
     }
-};
+  };
 
 
   const togglePasswordVisibility = () => {

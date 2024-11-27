@@ -7,7 +7,7 @@ const getFullImageUrl = (photo) => {
   return photo ? `http://localhost:3000/${photo}` : "https://via.placeholder.com/150";
 };
 
-const DoctorModal = ({ isOpen, doctor, onClose, isAuthenticated }) => {
+const DoctorModal = ({ isOpen, doctor, onClose, isAuthenticated, userId }) => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -15,21 +15,18 @@ const DoctorModal = ({ isOpen, doctor, onClose, isAuthenticated }) => {
   useEffect(() => {
     if (isOpen) {
       setShowModal(true);
-      document.body.style.overflow = "hidden"; // Evita el desplazamiento en el fondo.
+      document.body.style.overflow = "hidden";
     } else {
       setShowModal(false);
-      document.body.style.overflow = ""; // Restaura el desplazamiento.
+      document.body.style.overflow = "";
     }
-
     return () => {
-      document.body.style.overflow = ""; // Limpia el efecto al desmontar.
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 
   const handleNavigate = () => {
-    // Verificar si el usuario está autenticado
     if (!isAuthenticated) {
-      // Cerrar el modal antes de mostrar la alerta
       onClose();
       Swal.fire({
         title: "Para continuar",
@@ -46,52 +43,44 @@ const DoctorModal = ({ isOpen, doctor, onClose, isAuthenticated }) => {
       });
       return;
     }
-  
-    // Si está autenticado, proceder con la navegación
+
     setShowModal(false);
-  
     setTimeout(() => {
       setIsLoading(true);
-  
       setTimeout(() => {
         setIsLoading(false);
         navigate(
-          `/schedule-appointment?doctor=${encodeURIComponent(
+          `/schedule-appointment?doctorId=${doctor.doctorId}&doctor=${encodeURIComponent(
             doctor.username
           )}&especialidad=${encodeURIComponent(
             doctor.especialidades
-          )}&photo=${encodeURIComponent(doctor.fotoUrl || "")}`
+          )}&photo=${encodeURIComponent(doctor.fotoUrl || "")}&userId=${userId}`
         );
       }, 2000);
     }, 300);
   };
-  
 
   if (!isOpen || !doctor) return null;
 
   return (
     <>
       {isLoading && <LoadingOverlay />}
-
       <div
-        className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 overflow-y-auto overflow-x-hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 overflow-y-auto transition-opacity duration-300 ${
           showModal ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         aria-hidden="true"
       >
         <div
-          className={`relative p-4 w-full max-w-3xl max-h-full bg-white rounded-lg shadow-lg dark:bg-gray-800 transition-transform duration-300 ${
+          className={`relative p-4 w-full max-w-3xl bg-white rounded-lg shadow-lg transition-transform duration-300 ${
             showModal ? "translate-y-0 scale-100" : "translate-y-10 scale-95"
           }`}
         >
-          {/* Modal header */}
-          <div className="p-6 border-b border-gray-300 dark:border-gray-700">
-            <h3 className="text-2xl text-center font-semibold text-gray-800 dark:text-white">
-              {doctor.username}
-            </h3>
+          <div className="p-6 border-b">
+            <h3 className="text-2xl text-center font-semibold">{doctor.username}</h3>
             <button
               type="button"
-              className="absolute top-4 right-4 text-red-600 bg-transparent hover:bg-red-600 hover:text-white rounded-full p-2 dark:hover:bg-gray-600 dark:hover:text-white"
+              className="absolute top-4 right-4 text-red-600 hover:text-white hover:bg-red-600 rounded-full p-2"
               onClick={onClose}
             >
               <svg
@@ -110,37 +99,26 @@ const DoctorModal = ({ isOpen, doctor, onClose, isAuthenticated }) => {
               </svg>
             </button>
           </div>
-
-          {/* Modal body */}
           <div className="p-6 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
-            <div className="flex flex-col items-center mr-6">
+            <div className="flex flex-col items-center">
               <img
                 src={getFullImageUrl(doctor.fotoUrl)}
                 alt={doctor.username}
                 className="w-40 h-40 rounded-full shadow-md"
               />
-              <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400 mt-4">
-                {doctor.especialidades || "No hay especialidad disponible."}
-              </p>
+              <p className="text-sm text-gray-600 mt-4">{doctor.especialidades || "No hay especialidad disponible."}</p>
             </div>
             <div className="flex flex-col flex-grow">
-              <div className="flex-1">
-                <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-2">
-                  Información del doctor
-                </h4>
-                <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-                  {doctor.informacion ||
-                    "No hay descripción disponible para este doctor."}
-                </p>
-              </div>
+              <h4 className="text-lg font-medium mb-2">Información del doctor</h4>
+              <p className="text-sm text-gray-600">
+                {doctor.informacion || "No hay descripción disponible para este doctor."}
+              </p>
             </div>
           </div>
-
-          {/* Modal footer */}
-          <div className="flex justify-center p-6 space-x-3 border-t border-gray-300 dark:border-gray-700">
+          <div className="flex justify-center p-6 border-t">
             <button
               type="button"
-              className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-full font-medium transition-all duration-300"
+              className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-full font-medium"
               onClick={handleNavigate}
             >
               Ver Horarios Disponibles
