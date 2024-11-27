@@ -70,12 +70,18 @@ class Doctor {
         await checkConnection();
         const connection = await pool.getConnection();
         try {
-            const [result] = await connection.execute('SELECT * FROM doctores WHERE user_id = ?', [userId]);
+            console.log("Consultando doctor para user_id:", userId); // Verifica el userId recibido
+            const [result] = await connection.execute(
+                'SELECT * FROM doctores WHERE user_id = ?',
+                [userId]
+            );
+            console.log("Resultado de la consulta:", result); // Verifica el resultado de la consulta
             return result[0];
         } finally {
             connection.release();
         }
     }
+    
 
     static async getEspecialidadesByDoctorId(doctorId) {
         await checkConnection();

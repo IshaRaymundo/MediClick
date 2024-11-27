@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../../Components/Navbar";
 import Sidebar from "../../Components/Sidebar";
 import Swal from "sweetalert2";
@@ -9,6 +9,43 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [doctorId, setDoctorId] = useState(null); // Aquí almacenaremos el ID del médico
+
+  // Obtener el `user_id` desde localStorage
+  const userId = localStorage.getItem("userId");
+
+  // Al cargar la vista, buscar el `doctor_id` relacionado con el `user_id`
+  useEffect(() => {
+    const fetchDoctorId = async () => {
+        const userId = localStorage.getItem("userId"); // Verifica si este valor es correcto
+        console.log("User ID desde localStorage:", userId); // Agrega un log para verificar
+
+        if (!userId) {
+            console.error("No se encontró userId en localStorage");
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:3000/doctores/${userId}`);
+            if (!response.ok) {
+                throw new Error("Error al obtener el ID del médico");
+            }
+            const data = await response.json();
+            setDoctorId(data.doctor.id); // Guardar el ID del doctor obtenido
+            console.log("Doctor ID obtenido:", data.doctor.id); // Verifica el ID obtenido
+        } catch (error) {
+            console.error("Error al obtener el ID del médico:", error.message);
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Hubo un problema al obtener la información del médico.",
+            });
+        }
+    };
+
+    fetchDoctorId();
+}, []);
+
 
   const daysOfWeek = [
     { name: "DOM", value: "Domingo" },
@@ -61,12 +98,14 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
     try {
       const requests = timeSlots.map(async (slot) => {
         const payload = {
-          doctorId: 9, // ID del doctor
+          doctorId, // Ahora usamos el ID del médico obtenido dinámicamente
           diaSemana: selectedDay.value, // Día seleccionado
           horaInicio: slot.start,
           horaFin: slot.end,
           activo: 1,
         };
+
+        console.log("Payload enviado:", payload); // Para verificar el payload
 
         const response = await fetch("http://localhost:3000/disponibilidades", {
           method: "POST",

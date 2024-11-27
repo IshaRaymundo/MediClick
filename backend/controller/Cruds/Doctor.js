@@ -40,12 +40,15 @@ class DoctorController {
 
     static async getDoctor(req, res) {
         const { userId } = req.params;
+        console.log("Obteniendo doctor para userId:", userId); // Verifica el userId recibido
         try {
             const doctor = await Doctor.getDoctorByUserId(userId);
             if (!doctor) {
+                console.log("Doctor no encontrado"); // Verifica si no hay resultados
                 return res.status(404).json({ message: 'Doctor no encontrado' });
             }
-
+    
+            console.log("Doctor encontrado:", doctor); // Verifica el doctor encontrado
             const especialidades = await Doctor.getEspecialidadesByDoctorId(doctor.id);
             res.status(200).json({ doctor, especialidades });
         } catch (error) {
@@ -53,6 +56,7 @@ class DoctorController {
             res.status(500).json({ message: 'Error al obtener doctor' });
         }
     }
+    
 
     static async addEspecialidad(req, res) {
         const { userId } = req.params;
