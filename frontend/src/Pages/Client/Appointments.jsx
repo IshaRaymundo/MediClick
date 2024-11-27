@@ -154,7 +154,7 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
 
   const renderAppointments = () => {
     if (loading) {
-      return <p>Cargando citas...</p>;
+      return <p>Cargando citas....</p>;
     }
 
     const paginatedAppointments = getPaginatedAppointments();
