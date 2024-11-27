@@ -14,11 +14,12 @@ const DashboardDoc = ({ userName, userRole, handleLogout }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [alertShown, setAlertShown] = useState(false); // Controla si ya se mostró la alerta
+  const [appointments, setAppointments] = useState([]); // Citas
 
-  const nextAppointment = {
-    time: "10:30 AM",
-    patient: "Juan Pérez",
-  };
+  const nextAppointment = appointments.length > 0 ? {
+    time: appointments[0].hora_inicio,
+    patient: "Paciente " + appointments[0].user_id, // Aquí puedes agregar el nombre real si lo tienes
+  } : { time: "Sin citas", patient: "N/A" };
 
   // Obtener la información y especialidad del doctor
   useEffect(() => {
@@ -66,6 +67,23 @@ const DashboardDoc = ({ userName, userRole, handleLogout }) => {
     fetchDoctorData();
   }, [userName, alertShown]);
 
+  // Obtener citas del doctor
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/citas"); // URL para obtener las citas
+        const doctorAppointments = response.data.filter(
+          (cita) => cita.doctor_id === 2 // Asumimos que el doctor_id es 2, puedes actualizarlo con tu lógica
+        );
+        setAppointments(doctorAppointments);
+      } catch (err) {
+        setError("Error al obtener las citas");
+      }
+    };
+
+    fetchAppointments();
+  }, []);
+
   // Datos ficticios para la gráfica y próximas citas
   const chartData = {
     labels: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio"],
@@ -79,12 +97,6 @@ const DashboardDoc = ({ userName, userRole, handleLogout }) => {
       },
     ],
   };
-
-  const upcomingAppointments = [
-    { id: 1, date: "2024-12-01", time: "9:00 AM", patient: "Carlos Pérez" },
-    { id: 2, date: "2024-12-05", time: "10:30 AM", patient: "Ana Gómez" },
-    { id: 3, date: "2024-12-10", time: "1:00 PM", patient: "Luis Ramírez" },
-  ];
 
   return (
     <div className="flex">
@@ -165,15 +177,15 @@ const DashboardDoc = ({ userName, userRole, handleLogout }) => {
                 Próximas Citas
               </h2>
               <ul>
-                {upcomingAppointments.map((appointment) => (
+                {appointments.map((appointment) => (
                   <li
-                    key={appointment.id}
+                    key={appointment.citaId}
                     className="flex justify-between items-center border-b py-4"
                   >
                     <div>
-                      <p className="text-lg font-semibold">{appointment.patient}</p>
+                      <p className="text-lg font-semibold">{appointment.doctor_nombre}</p>
                       <p className="text-sm text-gray-500">
-                        {appointment.date} - {appointment.time}
+                        {appointment.fecha} - {appointment.hora_inicio} - {appointment.hora_fin}
                       </p>
                     </div>
                   </li>
