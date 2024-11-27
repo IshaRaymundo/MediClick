@@ -10,15 +10,15 @@ const getFullImageUrl = (photo) => {
     : "https://via.placeholder.com/150";
 };
 
-const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
+const ScheduleAppointment = ({ userName, userRole, userId, handleLogout }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [availableTimes, setAvailableTimes] = useState([]);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
-  const [timeToReserve, setTimeToReserve] = useState(null); // Guardar el horario seleccionado
 
   const location = useLocation();
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
+  const doctorId = queryParams.get("doctorId"); // Obtener doctorId de los parámetros
   const doctorName = queryParams.get("doctor") || "Doctor";
   const doctorEspecialidad = queryParams.get("especialidad") || "Especialidad";
   const doctorPhoto = queryParams.get("photo") || "";
@@ -34,7 +34,7 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
       const formattedDate = selectedDate.toISOString().split("T")[0];
       try {
         const response = await fetch(
-          `http://localhost:3000/horarios/disponibles?doctorId=2&fecha=${formattedDate}`
+          `http://localhost:3000/horarios/disponibles?doctorId=${doctorId}&fecha=${formattedDate}`
         );
 
         if (!response.ok) {
@@ -54,7 +54,7 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
     };
 
     fetchAvailableTimes();
-  }, [selectedDate]);
+  }, [selectedDate, doctorId]);
 
   const handleDayClick = (day) => {
     setSelectedDate(day);
@@ -69,12 +69,12 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
     const formattedDate = selectedDate.toISOString().split("T")[0];
 
     const payload = {
-      disponibilidadId: 2,
+      disponibilidadId: 11, // Este valor debe ser dinámico si está relacionado con la disponibilidad
       fecha: formattedDate,
       horaInicio,
       horaFin,
-      doctorId: 2,
-      pacienteId: 4,
+      doctorId: parseInt(doctorId, 10),
+      pacienteId: userId, // ID del paciente autenticado
     };
 
     try {
@@ -93,10 +93,10 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
         icon: "success",
         title: "¡Cita reservada!",
         text: data.message,
-        showConfirmButton: false, // Elimina el botón
-        timer: 2000, // Duración de 2 segundos
+        showConfirmButton: false,
+        timer: 2000,
       }).then(() => {
-        navigate("/"); // Redirige al home tras el tiempo definido
+        navigate("/");
       });
 
       setAvailableTimes((prev) =>
@@ -117,7 +117,6 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
   };
 
   const handleReserve = (timeSlot) => {
-    setTimeToReserve(timeSlot); // Guarda el horario seleccionado para confirmación
     Swal.fire({
       title: "Confirmar reserva",
       text: `¿Estás seguro de reservar este horario? ${timeSlot.horaInicio} - ${timeSlot.horaFin}`,
@@ -127,7 +126,7 @@ const ScheduleAppointment = ({ userName, userRole, handleLogout }) => {
       cancelButtonText: "Cancelar",
     }).then((result) => {
       if (result.isConfirmed) {
-        confirmReservation(timeSlot); // Realiza la reserva si se confirma
+        confirmReservation(timeSlot);
       }
     });
   };
