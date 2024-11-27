@@ -4,11 +4,13 @@ import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import Navbar from "../../Components/Navbar";
 import Sidebar from "../../Components/Sidebar";
+import { useNavigate } from "react-router-dom";
 
 const MySwal = withReactContent(Swal);
 
 const Appointments = ({ userName, userRole, handleLogout }) => {
   const location = useLocation();
+  const navigate = useNavigate(); 
   const [view, setView] = useState(location.state?.view || "upcoming");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -156,8 +158,23 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
     if (loading) {
       return <p>Cargando citas....</p>;
     }
-
-    const paginatedAppointments = getPaginatedAppointments();
+  
+    // Filtrar citas según el estado
+    const filteredAppointments = appointments.filter((appointment) => {
+      if (view === "upcoming") {
+        return appointment.estado_id === 1; // Solo citas pendientes
+      }
+      if (view === "past") {
+        return appointment.estado_id === 2 || appointment.estado_id === 3; // Citas canceladas o finalizadas
+      }
+      return true; // Si la vista no es "upcoming" ni "past", mostrar todas las citas
+    });
+  
+    const paginatedAppointments = filteredAppointments.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+  
     return paginatedAppointments.map((appointment) => (
       <div
         key={appointment.id}
@@ -175,17 +192,47 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
         </div>
         <div className="flex justify-center md:justify-end space-x-4">
           {view === "upcoming" && (
-            <button
-              className="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700 transition-all"
-              onClick={() => handleCancel(appointment)}
-            >
-              Cancelar
-            </button>
+            <>
+              <button
+                className="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700 transition-all"
+                onClick={() => handleCancel(appointment)}
+              >
+                Cancelar
+              </button>
+              <button
+  className="bg-yellow-600 text-white px-6 py-2 rounded-full hover:bg-yellow-700 transition-all"
+  onClick={() => {
+    // Validar que todos los datos necesarios están disponibles
+    if (!appointment.doctor_id || !appointment.doctor_nombre) {
+      MySwal.fire({
+        title: "Error",
+        text: "No se pudo identificar al doctor. Por favor, vuelve a intentarlo.",
+        icon: "error",
+      });
+      return;
+    }
+
+    const doctorId = appointment.doctor_id; // ID único del doctor
+    const doctorNombre = appointment.doctor_nombre;
+    const especialidad = appointment.especialidades || "Desconocida";
+    const photo = appointment.photo || ""; // Foto si aplica
+    const userId = userName; // Asegúrate de que `userName` esté definido
+
+    // Construir la URL con los datos necesarios
+    const url = `/schedule-appointment?doctorId=${doctorId}&doctor=${doctorNombre}&especialidad=${especialidad}&photo=${photo}&userId=${userId}`;
+    navigate(url);
+  }}
+>
+  Reagendar
+</button>
+
+            </>
           )}
         </div>
       </div>
     ));
   };
+  
 
   const toggleSidebar = () => {
     setIsSidebarExpanded(!isSidebarExpanded);
