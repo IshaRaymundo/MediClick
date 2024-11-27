@@ -90,6 +90,7 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
       });
 
       setTimeSlots([]); // Limpia los horarios tras la publicación
+      setSelectedDay(null); // Limpia el día seleccionado
     } catch (error) {
       console.error("Error al publicar horarios:", error);
       Swal.fire({
