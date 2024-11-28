@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 
 const Schedule = ({ userName, userRole, handleLogout }) => {
   const [selectedDay, setSelectedDay] = useState(null);
-  const [timeSlots, setTimeSlots] = useState([]);
+  const [dayTimeSlots, setDayTimeSlots] = useState({});
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
@@ -69,13 +69,22 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
   ];
 
   const handleDayClick = (day) => {
+    if (selectedDay?.name !== day.name) {
+      setStartTime("");
+      setEndTime("");
+    }
     setSelectedDay(day);
-    setTimeSlots([]);
   };
 
   const handleAddTimeSlot = () => {
     if (startTime && endTime && startTime < endTime) {
-      setTimeSlots([...timeSlots, { start: startTime, end: endTime }]);
+      setDayTimeSlots((prev) => ({
+        ...prev,
+        [selectedDay.name]: [
+          ...(prev[selectedDay.name] || []),
+          { start: startTime, end: endTime },
+        ],
+      }));
       setStartTime("");
       setEndTime("");
     } else {
@@ -97,7 +106,9 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
       return;
     }
 
-    if (timeSlots.length === 0) {
+    const selectedDaySlots = dayTimeSlots[selectedDay.name] || [];
+
+    if (selectedDaySlots.length === 0) {
       Swal.fire({
         icon: "warning",
         title: "No hay horarios",
@@ -107,7 +118,7 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
     }
 
     try {
-      const requests = timeSlots.map(async (slot) => {
+      const requests = selectedDaySlots.map(async (slot) => {
         const payload = {
           doctorId,
           diaSemana: selectedDay.value,
@@ -116,11 +127,14 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
           activo: 1,
         };
 
-        const response = await fetch("http://localhost:3000/disponibilidades", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        const response = await fetch(
+          "http://localhost:3000/disponibilidades",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
 
         if (!response.ok)
           throw new Error("Error en la publicación del horario");
@@ -136,8 +150,10 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
       });
 
       fetchPublishedSchedules(doctorId);
-      setTimeSlots([]);
-      setSelectedDay(null);
+      setDayTimeSlots((prev) => ({
+        ...prev,
+        [selectedDay.name]: [],
+      }));
     } catch (error) {
       console.error("Error al publicar horarios:", error);
       Swal.fire({
@@ -268,6 +284,18 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
                   <span className="text-xl font-light">+</span>
                   <span className="text-sm font-light">Añadir</span>
                 </button>
+              </div>
+
+              {/* Horarios seleccionados */}
+              <div className="bg-gray-100 p-4 rounded-lg mt-4">
+                <h2 className="text-lg font-semibold mb-2">Horarios añadidos:</h2>
+                <ul>
+                  {(dayTimeSlots[selectedDay?.name] || []).map((slot, index) => (
+                    <li key={index} className="text-gray-700">
+                      {slot.start} - {slot.end}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
