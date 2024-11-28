@@ -15,6 +15,8 @@ import UserProfile from './Components/Profile';
 import EspecialidadesManagement from './Pages/Admin/Speciality';
 import Schedule from './Pages/Doctor/Schedule';
 import AppointmentsDoc from './Pages/Doctor/AppointmentsDoc';
+import SpecialitySelect from './Components/SpecialitySelect'; // Importa el nuevo componente
+
 
 function App() {
   const [userName, setUserName] = useState('');
@@ -124,6 +126,7 @@ function App() {
                   setUserRole={setUserRole}
                   handleLogout={handleLogout}
                 />
+                
               </ProtectedRoute>
             }
           />
@@ -243,6 +246,17 @@ function App() {
               />
             }
           />
+
+<Route
+  path="/especialidades/:especialidad"
+  element={
+    <SpecialitySelect
+      userName={userName}
+      userRole={userRole}
+      handleLogout={handleLogout}
+    />
+  }
+/>
 
 
         </Routes>

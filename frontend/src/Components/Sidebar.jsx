@@ -180,49 +180,44 @@ const Sidebar = ({
                 }`}
               >
                 <div className="text-center">
-                  <Link
-                    to="/especialidades/cardiologia"
-                    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
-                  >
-                    Cardiología
-                  </Link>
-                  <Link
-                    to="/especialidades/neurologia"
-                    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
-                  >
-                    Neurología
-                  </Link>
-                  <Link
-                    to="/especialidades/odontologia"
-                    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
-                  >
-                    Odontología
-                  </Link>
-                  <Link
-                    to="/especialidades/pediatria"
-                    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
-                  >
-                    Pediatría
-                  </Link>
-                  <Link
-                    to="/especialidades/ortopedia"
-                    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
-                  >
-                    Ortopedia
-                  </Link>
-                  <Link
-                    to="/especialidades/oftalmologia"
-                    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
-                  >
-                    Oftalmología
-                  </Link>
-                  <Link
-                    to="/especialidades/nutriologia"
-                    className="block p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
-                  >
-                    Nutriología
-                  </Link>
-                </div>
+  <Link
+    to="/especialidades/cardiologia"
+    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
+  >
+    Cardiología
+  </Link>
+  <Link
+    to="/especialidades/neurologia"
+    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
+  >
+    Neurología
+  </Link>
+  <Link
+    to="/especialidades/dermatologia"
+    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
+  >
+    Dermatología
+  </Link>
+  <Link
+    to="/especialidades/pediatria"
+    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
+  >
+    Pediatría
+  </Link>
+  <Link
+    to="/especialidades/oftalmologia"
+    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
+  >
+    Oftalmología
+  </Link>
+  <Link
+    to="/especialidades/nutriologia"
+    className="block mb-2 p-2 rounded-lg hover:bg-blue-600 text-white transition-all duration-300"
+  >
+    Nutriología
+  </Link>
+</div>
+
               </div>
             </div>
           </>
@@ -305,7 +300,9 @@ const Sidebar = ({
                   isExpanded ? "w-8 h-8" : "w-6 h-6"
                 }`}
               />
-              {isExpanded && <span className="ml-4 font-medium">Especialidades</span>}
+              {isExpanded && (
+                <span className="ml-4 font-medium">Especialidades</span>
+              )}
             </Link>
           </>
         )}

@@ -20,7 +20,8 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
       const response = await fetch(
         `http://localhost:3000/disponibilidades/${doctorId}`
       );
-      if (!response.ok) throw new Error("Error al obtener los horarios publicados");
+      if (!response.ok)
+        throw new Error("Error al obtener los horarios publicados");
       const data = await response.json();
       setPublishedSchedules(data);
     } catch (error) {
@@ -121,7 +122,8 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
           body: JSON.stringify(payload),
         });
 
-        if (!response.ok) throw new Error("Error en la publicación del horario");
+        if (!response.ok)
+          throw new Error("Error en la publicación del horario");
         return response.json();
       });
 
@@ -279,66 +281,65 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
             </button>
           </div>
 
-{/* Horarios publicados */}
-<div className="mt-8">
-  <table className="w-full bg-white border border-gray-300 rounded-lg shadow-md">
-    <thead className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-      <tr>
-        <th className="px-6 py-3 text-left border border-gray-300">
-          Día
-        </th>
-        <th className="px-6 py-3 text-left border border-gray-300">
-          Hora Inicio
-        </th>
-        <th className="px-6 py-3 text-left border border-gray-300">
-          Hora Fin
-        </th>
-        <th className="px-6 py-3 text-center border border-gray-300">
-          Acciones
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      {publishedSchedules && publishedSchedules.length > 0 ? (
-        publishedSchedules.map((schedule) => (
-          <tr
-            key={schedule.id}
-            className="hover:bg-gray-100 transition-colors duration-200"
-          >
-            <td className="px-6 py-4 border border-gray-300 text-gray-800">
-              {schedule.dia_semana}
-            </td>
-            <td className="px-6 py-4 border border-gray-300 text-gray-800">
-              {schedule.hora_inicio}
-            </td>
-            <td className="px-6 py-4 border border-gray-300 text-gray-800">
-              {schedule.hora_fin}
-            </td>
-            <td className="px-6 py-4 border border-gray-300 text-center">
-              <button
-                onClick={() => handleDeleteSchedule(schedule.id)}
-                className="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700"
-                title="Eliminar horario"
-              >
-                <FaTrash />
-              </button>
-            </td>
-          </tr>
-        ))
-      ) : (
-        <tr>
-          <td
-            colSpan="4"
-            className="px-6 py-4 text-center text-gray-600 border border-gray-300"
-          >
-            No hay horarios disponibles
-          </td>
-        </tr>
-      )}
-    </tbody>
-  </table>
-</div>
-
+          {/* Horarios publicados */}
+          <div className="mt-8">
+            <table className="w-full bg-white border border-gray-300 rounded-lg shadow-md">
+              <thead className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+                <tr>
+                  <th className="px-6 py-3 text-left border border-gray-300">
+                    Día
+                  </th>
+                  <th className="px-6 py-3 text-left border border-gray-300">
+                    Hora Inicio
+                  </th>
+                  <th className="px-6 py-3 text-left border border-gray-300">
+                    Hora Fin
+                  </th>
+                  <th className="px-6 py-3 text-center border border-gray-300">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {publishedSchedules && publishedSchedules.length > 0 ? (
+                  publishedSchedules.map((schedule) => (
+                    <tr
+                      key={schedule.id}
+                      className="hover:bg-gray-100 transition-colors duration-200"
+                    >
+                      <td className="px-6 py-4 border border-gray-300 text-gray-800">
+                        {schedule.dia_semana}
+                      </td>
+                      <td className="px-6 py-4 border border-gray-300 text-gray-800">
+                        {schedule.hora_inicio}
+                      </td>
+                      <td className="px-6 py-4 border border-gray-300 text-gray-800">
+                        {schedule.hora_fin}
+                      </td>
+                      <td className="px-6 py-4 border border-gray-300 text-center">
+                        <button
+                          onClick={() => handleDeleteSchedule(schedule.id)}
+                          className="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700"
+                          title="Eliminar horario"
+                        >
+                          <FaTrash />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="4"
+                      className="px-6 py-4 text-center text-gray-600 border border-gray-300"
+                    >
+                      No hay horarios disponibles
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
