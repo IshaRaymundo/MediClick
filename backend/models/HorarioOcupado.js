@@ -21,14 +21,18 @@ class HorarioOcupado {
         await checkConnection();
         const connection = await pool.getConnection();
         try {
-            await connection.execute(
+            const [result] = await connection.execute(
                 'INSERT INTO horarios_ocupados (disponibilidad_id, fecha, hora_inicio, hora_fin, estado) VALUES (?, ?, ?, ?, ?)',
                 [disponibilidadId, fecha, horaInicio, horaFin, estado]
             );
+    
+            // Retorna el ID del horario ocupado insertado
+            return result.insertId;
         } finally {
             connection.release();
         }
     }
+    
     
 
     // Obtener todos los horarios ocupados por disponibilidad y fecha

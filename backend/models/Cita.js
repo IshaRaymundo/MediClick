@@ -17,11 +17,12 @@ class Cita {
 
  // Obtener todas las citas con el nombre del paciente
 // Modelo: Cita.js
-static async getAllCitas() {
+static async getAllCitas(userId) {
     await checkConnection();
     const connection = await pool.getConnection();
     try {
-        const [result] = await connection.execute(`
+        const [result] = await connection.execute(
+            `
             SELECT 
                 citas.id AS citaId,
                 citas.doctor_id,
@@ -30,7 +31,7 @@ static async getAllCitas() {
                 citas.hora_inicio,
                 citas.hora_fin,
                 citas.estado_id,
-                horarios_ocupados.id AS disponibilidad_id,
+                COALESCE(citas.disponibilidad_id, NULL) AS disponibilidad_id, -- Asegura que disponibilidad_id sea NULL si no está presente
                 usuarios.username AS doctor_nombre,
                 paciente.username AS paciente_nombre, 
                 GROUP_CONCAT(DISTINCT especialidades.nombre SEPARATOR ', ') AS especialidades
@@ -40,15 +41,19 @@ static async getAllCitas() {
             LEFT JOIN users AS paciente ON citas.user_id = paciente.id  
             LEFT JOIN doctor_especialidad ON doctores.id = doctor_especialidad.doctor_id
             LEFT JOIN especialidades ON doctor_especialidad.especialidad_id = especialidades.id
-            LEFT JOIN horarios_ocupados ON horarios_ocupados.disponibilidad_id = citas.doctor_id
+            WHERE citas.user_id = ?
             GROUP BY citas.id
-        `);
+            `,
+            [userId]
+        );
 
         return result;
     } finally {
         connection.release();
     }
 }
+
+
 
     // Actualizar el estado de una cita
     static async updateEstadoCita(citaId, estadoId) {
@@ -62,18 +67,19 @@ static async getAllCitas() {
     }
 
     // Crear una nueva cita
-    static async createCita({ doctorId, pacienteId, fecha, horaInicio, horaFin, estadoId }) {
+    static async createCita({ doctorId, pacienteId, fecha, horaInicio, horaFin, estadoId, disponibilidadId }) {
         await checkConnection();
         const connection = await pool.getConnection();
         try {
             await connection.execute(
-                'INSERT INTO citas (doctor_id, user_id, fecha, hora_inicio, hora_fin, estado_id) VALUES (?, ?, ?, ?, ?, ?)',
-                [doctorId, pacienteId, fecha, horaInicio, horaFin, estadoId]
+                'INSERT INTO citas (doctor_id, user_id, fecha, hora_inicio, hora_fin, estado_id, disponibilidad_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [doctorId, pacienteId, fecha, horaInicio, horaFin, estadoId, disponibilidadId]
             );
         } finally {
             connection.release();
         }
     }
+    
 }
 
 module.exports = Cita;

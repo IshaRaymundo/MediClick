@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"; 
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -10,7 +10,7 @@ const MySwal = withReactContent(Swal);
 
 const Appointments = ({ userName, userRole, handleLogout }) => {
   const location = useLocation();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [view, setView] = useState(location.state?.view || "upcoming");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -38,27 +38,37 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
     return `${hours}:${minutes} ${ampm}`;
   };
 
-  // Cargar citas desde el backend
   useEffect(() => {
     const fetchAppointments = async () => {
+      const userId = localStorage.getItem("userId");
+      console.log("userId cargado desde localStorage:", userId); // Depuración
+
       setLoading(true);
       try {
-        const response = await fetch(`http://localhost:3000/citas?user_id=${userName}`);
+        const response = await fetch(`http://localhost:3000/citas?user_id=${userId}`);
         if (response.ok) {
           const data = await response.json();
           console.log("Citas obtenidas del backend:", data);
           setAppointments(data);
         } else {
-          throw new Error("Error al obtener las citas");
+          const errorData = await response.json();
+          console.error("Error en la respuesta:", errorData.message);
         }
       } catch (error) {
         console.error("Error al cargar las citas:", error);
+        MySwal.fire({
+          title: "Error",
+          text: "No se pudo conectar con el servidor. Verifica tu conexión o intenta más tarde.",
+          icon: "error",
+        });
       } finally {
         setLoading(false);
       }
+      
     };
+
     fetchAppointments();
-  }, [userName]);
+  }, []);
 
   const totalPages = Math.ceil(appointments.length / itemsPerPage);
 
@@ -74,91 +84,75 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
 
   const handleCancel = async (appointment) => {
     console.log("Cita seleccionada para cancelar:", appointment);
-  
-    // Validar datos necesarios
+
     if (
-      !appointment.disponibilidad_id ||
-      !appointment.citaId ||
-      !appointment.fecha ||
-      !appointment.hora_inicio ||
-      !appointment.hora_fin
+        !appointment.disponibilidad_id ||
+        !appointment.citaId ||
+        !appointment.fecha ||
+        !appointment.hora_inicio ||
+        !appointment.hora_fin
     ) {
-      console.error("Datos incompletos para cancelar la cita:", appointment);
-      MySwal.fire({
-        title: "Error",
-        text: "No se encontraron datos suficientes para cancelar la cita.",
-        icon: "error",
-      });
-      return;
+        console.error("Datos incompletos para cancelar la cita:", appointment);
+        MySwal.fire({
+            title: "Error",
+            text: "No se encontraron datos suficientes para cancelar la cita.",
+            icon: "error",
+        });
+        return;
     }
-  
-    // Confirmación del usuario
-    MySwal.fire({
-      title: "¿Estás seguro de querer cancelar esta cita?",
-      text: `Cita con ${appointment.doctor_nombre} (${appointment.especialidades}) el ${formatDate(
-        appointment.fecha
-      )} a las ${formatTime(appointment.hora_inicio)}`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Sí, cancelar",
-      cancelButtonText: "No",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        // Construir el cuerpo de la solicitud
-        const requestBody = {
-          disponibilidadId: appointment.disponibilidad_id,
-          fecha: new Date(appointment.fecha).toISOString().split("T")[0], // Asegura formato YYYY-MM-DD
-          horaInicio: appointment.hora_inicio, // Formato HH:MM:SS
-          horaFin: appointment.hora_fin,       // Formato HH:MM:SS
-          citaId: appointment.citaId,
-        };
-  
-        console.log("Datos enviados al backend para cancelar la cita:", requestBody);
-  
-        try {
-          const response = await fetch("http://localhost:3000/horarios/cancelar", {
+
+    // Convertir la fecha al formato adecuado
+    const formattedDate = new Date(appointment.fecha).toISOString().split("T")[0];
+
+    const requestBody = {
+        disponibilidadId: appointment.disponibilidad_id,
+        fecha: formattedDate, // Fecha en formato YYYY-MM-DD
+        horaInicio: appointment.hora_inicio,
+        horaFin: appointment.hora_fin,
+        citaId: appointment.citaId,
+    };
+
+    console.log("Datos enviados al backend para cancelar la cita:", requestBody);
+
+    try {
+        const response = await fetch("http://localhost:3000/horarios/cancelar", {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(requestBody),
-          });
-  
-          if (response.ok) {
-            // Actualizar la lista de citas
+        });
+
+        if (response.ok) {
             setAppointments((prev) =>
-              prev.filter((item) => item.citaId !== appointment.citaId)
+                prev.filter((item) => item.citaId !== appointment.citaId)
             );
             MySwal.fire({
-              title: "¡Cita cancelada!",
-              text: "La cita ha sido cancelada exitosamente.",
-              icon: "success",
-              timer: 2000,
-              showConfirmButton: false,
+                title: "¡Cita cancelada!",
+                text: "La cita ha sido cancelada exitosamente.",
+                icon: "success",
+                timer: 2000,
+                showConfirmButton: false,
             });
-          } else {
+        } else {
             const errorData = await response.json();
             console.error("Error del backend al cancelar la cita:", errorData);
             throw new Error(errorData.message || "No se pudo cancelar la cita.");
-          }
-        } catch (error) {
-          console.error("Error al cancelar la cita:", error);
-          MySwal.fire({
+        }
+    } catch (error) {
+        console.error("Error al cancelar la cita:", error);
+        MySwal.fire({
             title: "Error",
             text: "No se pudo cancelar la cita. Intenta de nuevo más tarde.",
             icon: "error",
-          });
-        }
-      }
-    });
-  };
-  
+        });
+    }
+};
+
 
   const renderAppointments = () => {
     if (loading) {
       return <p>Cargando citas....</p>;
     }
-  
+
     // Filtrar citas según el estado
     const filteredAppointments = appointments.filter((appointment) => {
       if (view === "upcoming") {
@@ -169,23 +163,27 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
       }
       return true; // Si la vista no es "upcoming" ni "past", mostrar todas las citas
     });
-  
+
     const paginatedAppointments = filteredAppointments.slice(
       (currentPage - 1) * itemsPerPage,
       currentPage * itemsPerPage
     );
-  
+
     return paginatedAppointments.map((appointment) => (
       <div
-        key={appointment.id}
+      key={appointment.citaId}
         className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center border-b border-gray-300 py-6"
       >
         <div>
-          <p className="font-medium text-lg text-blue-900">{appointment.doctor_nombre}</p>
+          <p className="font-medium text-lg text-blue-900">
+            {appointment.doctor_nombre}
+          </p>
           <p className="text-sm text-gray-500">{appointment.especialidades}</p>
         </div>
         <div className="text-center">
-          <p className="font-semibold text-lg">{formatDate(appointment.fecha)}</p>
+          <p className="font-semibold text-lg">
+            {formatDate(appointment.fecha)}
+          </p>
           <p className="text-sm text-gray-500">{`${formatTime(
             appointment.hora_inicio
           )} - ${formatTime(appointment.hora_fin)}`}</p>
@@ -200,39 +198,38 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
                 Cancelar
               </button>
               <button
-  className="bg-yellow-600 text-white px-6 py-2 rounded-full hover:bg-yellow-700 transition-all"
-  onClick={() => {
-    // Validar que todos los datos necesarios están disponibles
-    if (!appointment.doctor_id || !appointment.doctor_nombre) {
-      MySwal.fire({
-        title: "Error",
-        text: "No se pudo identificar al doctor. Por favor, vuelve a intentarlo.",
-        icon: "error",
-      });
-      return;
-    }
+                className="bg-yellow-600 text-white px-6 py-2 rounded-full hover:bg-yellow-700 transition-all"
+                onClick={() => {
+                  // Validar que todos los datos necesarios están disponibles
+                  if (!appointment.doctor_id || !appointment.doctor_nombre) {
+                    MySwal.fire({
+                      title: "Error",
+                      text: "No se pudo identificar al doctor. Por favor, vuelve a intentarlo.",
+                      icon: "error",
+                    });
+                    return;
+                  }
 
-    const doctorId = appointment.doctor_id; // ID único del doctor
-    const doctorNombre = appointment.doctor_nombre;
-    const especialidad = appointment.especialidades || "Desconocida";
-    const photo = appointment.photo || ""; // Foto si aplica
-    const userId = userName; // Asegúrate de que `userName` esté definido
+                  const doctorId = appointment.doctor_id; // ID único del doctor
+                  const doctorNombre = appointment.doctor_nombre;
+                  const especialidad =
+                    appointment.especialidades || "Desconocida";
+                  const photo = appointment.photo || ""; // Foto si aplica
+                  const userId = userName; // Asegúrate de que `userName` esté definido
 
-    // Construir la URL con los datos necesarios
-    const url = `/schedule-appointment?doctorId=${doctorId}&doctor=${doctorNombre}&especialidad=${especialidad}&photo=${photo}&userId=${userId}`;
-    navigate(url);
-  }}
->
-  Reagendar
-</button>
-
+                  // Construir la URL con los datos necesarios
+                  const url = `/schedule-appointment?doctorId=${doctorId}&doctor=${doctorNombre}&especialidad=${especialidad}&photo=${photo}&userId=${userId}`;
+                  navigate(url);
+                }}
+              >
+                Reagendar
+              </button>
             </>
           )}
         </div>
       </div>
     ));
   };
-  
 
   const toggleSidebar = () => {
     setIsSidebarExpanded(!isSidebarExpanded);
@@ -310,7 +307,7 @@ const Appointments = ({ userName, userRole, handleLogout }) => {
                     onClick={() => handlePageChange(currentPage - 1)}
                     className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all"
                   >
-                    Anterior 
+                    Anterior
                   </button>
                 )}
                 {currentPage < totalPages && (
