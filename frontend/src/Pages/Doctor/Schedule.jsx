@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { FaTrash } from "react-icons/fa";
 import Navbar from "../../Components/Navbar";
 import Sidebar from "../../Components/Sidebar";
 import Swal from "sweetalert2";
@@ -9,43 +10,52 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
-  const [doctorId, setDoctorId] = useState(null); // Aquí almacenaremos el ID del médico
+  const [doctorId, setDoctorId] = useState(null);
+  const [publishedSchedules, setPublishedSchedules] = useState([]);
 
-  // Obtener el `user_id` desde localStorage
   const userId = localStorage.getItem("userId");
 
-  // Al cargar la vista, buscar el `doctor_id` relacionado con el `user_id`
+  const fetchPublishedSchedules = async (doctorId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/disponibilidades/${doctorId}`
+      );
+      if (!response.ok) throw new Error("Error al obtener los horarios publicados");
+      const data = await response.json();
+      setPublishedSchedules(data);
+    } catch (error) {
+      console.error("Error al cargar horarios publicados:", error.message);
+    }
+  };
+
   useEffect(() => {
     const fetchDoctorId = async () => {
-        const userId = localStorage.getItem("userId"); // Verifica si este valor es correcto
-        console.log("User ID desde localStorage:", userId); // Agrega un log para verificar
-
-        if (!userId) {
-            console.error("No se encontró userId en localStorage");
-            return;
-        }
-
-        try {
-            const response = await fetch(`http://localhost:3000/doctores/${userId}`);
-            if (!response.ok) {
-                throw new Error("Error al obtener el ID del médico");
-            }
-            const data = await response.json();
-            setDoctorId(data.doctor.id); // Guardar el ID del doctor obtenido
-            console.log("Doctor ID obtenido:", data.doctor.id); // Verifica el ID obtenido
-        } catch (error) {
-            console.error("Error al obtener el ID del médico:", error.message);
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "Hubo un problema al obtener la información del médico.",
-            });
-        }
+      try {
+        const response = await fetch(
+          `http://localhost:3000/doctores/${userId}`
+        );
+        if (!response.ok) throw new Error("Error al obtener el ID del médico");
+        const data = await response.json();
+        setDoctorId(data.doctor.id);
+        fetchPublishedSchedules(data.doctor.id);
+      } catch (error) {
+        console.error("Error al obtener el ID del médico:", error.message);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Hubo un problema al obtener la información del médico.",
+        });
+      }
     };
 
     fetchDoctorId();
-}, []);
+  }, [userId]);
 
+  useEffect(() => {
+    if (doctorId) {
+      fetchPublishedSchedules(doctorId);
+    }
+  }, [doctorId]);
 
   const daysOfWeek = [
     { name: "DOM", value: "Domingo" },
@@ -59,7 +69,7 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
 
   const handleDayClick = (day) => {
     setSelectedDay(day);
-    setTimeSlots([]); // Reset slots when selecting a new day
+    setTimeSlots([]);
   };
 
   const handleAddTimeSlot = () => {
@@ -98,14 +108,12 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
     try {
       const requests = timeSlots.map(async (slot) => {
         const payload = {
-          doctorId, // Ahora usamos el ID del médico obtenido dinámicamente
-          diaSemana: selectedDay.value, // Día seleccionado
+          doctorId,
+          diaSemana: selectedDay.value,
           horaInicio: slot.start,
           horaFin: slot.end,
           activo: 1,
         };
-
-        console.log("Payload enviado:", payload); // Para verificar el payload
 
         const response = await fetch("http://localhost:3000/disponibilidades", {
           method: "POST",
@@ -113,10 +121,7 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
           body: JSON.stringify(payload),
         });
 
-        if (!response.ok) {
-          throw new Error("Error en la publicación del horario");
-        }
-
+        if (!response.ok) throw new Error("Error en la publicación del horario");
         return response.json();
       });
 
@@ -128,8 +133,9 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
         text: "Tus horarios han sido publicados exitosamente.",
       });
 
-      setTimeSlots([]); // Limpia los horarios tras la publicación
-      setSelectedDay(null); // Limpia el día seleccionado
+      fetchPublishedSchedules(doctorId);
+      setTimeSlots([]);
+      setSelectedDay(null);
     } catch (error) {
       console.error("Error al publicar horarios:", error);
       Swal.fire({
@@ -140,8 +146,47 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
     }
   };
 
-  const toggleSidebar = () => {
-    setIsSidebarExpanded(!isSidebarExpanded);
+  const handleDeleteSchedule = async (id) => {
+    const confirm = await Swal.fire({
+      title: "¿Estás seguro?",
+      text: "Este horario será eliminado permanentemente.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (confirm.isConfirmed) {
+      try {
+        const response = await fetch(
+          `http://localhost:3000/disponibilidades/${id}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (!response.ok) throw new Error("Error al eliminar el horario");
+
+        Swal.fire({
+          icon: "success",
+          title: "Horario eliminado",
+          text: "El horario se ha eliminado exitosamente.",
+        });
+
+        setPublishedSchedules((prev) =>
+          prev.filter((schedule) => schedule.id !== id)
+        );
+      } catch (error) {
+        console.error("Error al eliminar horario:", error.message);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo eliminar el horario. Inténtalo nuevamente.",
+        });
+      }
+    }
   };
 
   return (
@@ -155,18 +200,15 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
       <div className="flex-1">
         <Navbar
           userName={userName}
-          toggleSidebar={toggleSidebar}
+          toggleSidebar={() => setIsSidebarExpanded(!isSidebarExpanded)}
           isSidebarExpanded={isSidebarExpanded}
         />
         <div className="p-6">
-          <h1 className="text-4xl font-bold text-gray-800 text-center mb-4">
+          <h1 className="text-4xl font-bold text-gray-800 text-center mb-6">
             Mi horario
           </h1>
-          <p className="text-gray-600 text-center mb-8">
-            Selecciona un día de la semana y los horarios que estarás disponible
-            para atender pacientes.
-          </p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Selección de día */}
             <div className="bg-white p-6 rounded-lg shadow-lg">
               <h2 className="text-2xl font-semibold text-gray-800 mb-4">
@@ -219,35 +261,84 @@ const Schedule = ({ userName, userRole, handleLogout }) => {
                 </div>
                 <button
                   onClick={handleAddTimeSlot}
-                  className="bg-teal-600 text-white p-2 rounded-full hover:bg-teal-700 flex items-center justify-center w-8 h-8"
+                  className="bg-teal-600 text-white px-4 py-2 rounded-full hover:bg-teal-700 flex items-center space-x-2"
                 >
-                  +
+                  <span className="text-xl font-light">+</span>
+                  <span className="text-sm font-light">Añadir</span>
                 </button>
               </div>
-
-              {/* Lista de horarios añadidos */}
-              {timeSlots.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                    Horarios añadidos:
-                  </h3>
-                  <ul className="list-disc ml-6">
-                    {timeSlots.map((slot, index) => (
-                      <li key={index}>
-                        {slot.start} - {slot.end}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
           </div>
-          <button
-            onClick={handlePublishSchedule}
-            className="w-full mt-6 px-4 py-2 bg-teal-600 text-white font-semibold rounded-lg hover:bg-green-700"
+
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={handlePublishSchedule}
+              className="px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg hover:bg-green-700"
+            >
+              Publicar horario
+            </button>
+          </div>
+
+{/* Horarios publicados */}
+<div className="mt-8">
+  <table className="w-full bg-white border border-gray-300 rounded-lg shadow-md">
+    <thead className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+      <tr>
+        <th className="px-6 py-3 text-left border border-gray-300">
+          Día
+        </th>
+        <th className="px-6 py-3 text-left border border-gray-300">
+          Hora Inicio
+        </th>
+        <th className="px-6 py-3 text-left border border-gray-300">
+          Hora Fin
+        </th>
+        <th className="px-6 py-3 text-center border border-gray-300">
+          Acciones
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {publishedSchedules && publishedSchedules.length > 0 ? (
+        publishedSchedules.map((schedule) => (
+          <tr
+            key={schedule.id}
+            className="hover:bg-gray-100 transition-colors duration-200"
           >
-            Publicar horario
-          </button>
+            <td className="px-6 py-4 border border-gray-300 text-gray-800">
+              {schedule.dia_semana}
+            </td>
+            <td className="px-6 py-4 border border-gray-300 text-gray-800">
+              {schedule.hora_inicio}
+            </td>
+            <td className="px-6 py-4 border border-gray-300 text-gray-800">
+              {schedule.hora_fin}
+            </td>
+            <td className="px-6 py-4 border border-gray-300 text-center">
+              <button
+                onClick={() => handleDeleteSchedule(schedule.id)}
+                className="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700"
+                title="Eliminar horario"
+              >
+                <FaTrash />
+              </button>
+            </td>
+          </tr>
+        ))
+      ) : (
+        <tr>
+          <td
+            colSpan="4"
+            className="px-6 py-4 text-center text-gray-600 border border-gray-300"
+          >
+            No hay horarios disponibles
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
+
         </div>
       </div>
     </div>
