@@ -9,19 +9,25 @@ const AppointmentsDoc = ({ userName, userRole, handleLogout }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAppointments = async () => {
+    const fetchDoctorAppointments = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/citas");
-        console.log(response.data); // Verifica los datos que se están recibiendo
+        // Obtener el user_id desde localStorage
+        const userId = localStorage.getItem("userId");
+        
+        // Obtener las citas del doctor usando el user_id
+        const response = await axios.get(`http://localhost:3000/citas/doctor?user_id=${userId}`);
+        console.log("Citas del doctor:", response.data);
         setAppointments(response.data);
-        setLoading(false);
       } catch (error) {
-        console.error("Error fetching appointments:", error);
+        console.error("Error fetching doctor's appointments:", error);
+      } finally {
         setLoading(false);
       }
     };
-    fetchAppointments();
+  
+    fetchDoctorAppointments();
   }, []);
+  
 
   return (
     <div className="flex">

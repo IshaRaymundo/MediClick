@@ -53,6 +53,43 @@ static async getAllCitas(userId) {
     }
 }
 
+static async getAllCitasByDoctorId(doctorId) {
+    await checkConnection();
+    const connection = await pool.getConnection();
+    try {
+        const [result] = await connection.execute(
+            `
+            SELECT 
+                citas.id AS citaId,
+                citas.doctor_id,
+                citas.user_id,
+                citas.fecha,
+                citas.hora_inicio,
+                citas.hora_fin,
+                citas.estado_id,
+                COALESCE(citas.disponibilidad_id, NULL) AS disponibilidad_id,
+                usuarios.username AS doctor_nombre,
+                paciente.username AS paciente_nombre,
+                GROUP_CONCAT(DISTINCT especialidades.nombre SEPARATOR ', ') AS especialidades
+            FROM citas
+            JOIN doctores ON citas.doctor_id = doctores.id
+            JOIN users AS usuarios ON doctores.user_id = usuarios.id
+            LEFT JOIN users AS paciente ON citas.user_id = paciente.id
+            LEFT JOIN doctor_especialidad ON doctores.id = doctor_especialidad.doctor_id
+            LEFT JOIN especialidades ON doctor_especialidad.especialidad_id = especialidades.id
+            WHERE citas.doctor_id = ?
+            GROUP BY citas.id
+            `,
+            [doctorId]
+        );
+
+        return result;
+    } finally {
+        connection.release();
+    }
+}
+
+
 
 
     // Actualizar el estado de una cita

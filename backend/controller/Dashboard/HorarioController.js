@@ -1,6 +1,7 @@
 const Disponibilidad = require('../../models/Disponibilidad');
 const HorarioOcupado = require('../../models/HorarioOcupado');
 const Cita = require ('../../models/Cita');
+const Doctor = require('../../models/Doctor');
 
 class HorarioController {
     // Mapear horarios disponibles
@@ -140,6 +141,35 @@ static async listarCitas(req, res) {
 }
 
     
+static async listarCitasPorDoctor(req, res) {
+    try {
+        const { user_id } = req.query;
+        console.log("user_id recibido para listar citas del doctor:", user_id);
+
+        if (!user_id) {
+            return res.status(400).json({ message: "Falta el parámetro user_id" });
+        }
+
+        // Obtener el doctor_id usando el user_id
+        const doctor = await Doctor.getDoctorByUserId(user_id);
+        if (!doctor) {
+            return res.status(404).json({ message: "No se encontró el doctor para este usuario" });
+        }
+
+        const doctorId = doctor.id;
+        console.log("doctor_id obtenido:", doctorId);
+
+        // Obtener las citas del doctor
+        const citas = await Cita.getAllCitasByDoctorId(doctorId);
+        console.log("Citas encontradas para el doctor:", citas);
+
+        res.status(200).json(citas);
+    } catch (error) {
+        console.error("Error al listar citas por doctor:", error.message);
+        res.status(500).json({ message: "Error al listar citas por doctor" });
+    }
+}
+
     
     
 

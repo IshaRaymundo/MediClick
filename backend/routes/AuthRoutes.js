@@ -60,4 +60,7 @@ router.delete('/horarios/cancelar', HorarioController.cancelarReserva);
 router.get('/citas', HorarioController.listarCitas);
 router.post('/citas/finalizar', HorarioController.finalizarCita);
 
+router.get('/citas/doctor', HorarioController.listarCitasPorDoctor);
+
+
 module.exports = router;
